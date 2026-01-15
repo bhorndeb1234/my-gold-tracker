@@ -71,49 +71,53 @@
 
 <script>
 async function fetchGoldPrice() {
-            const updateTimeEl = document.getElementById('updateTime');
-            updateTimeEl.innerText = "กำลังอัปเดต...";
+        const updateTimeEl = document.getElementById('updateTime');
+        updateTimeEl.innerText = "กำลังอัปเดต...";
 
-            // ใช้ All-Origins Proxy ซึ่งเสถียรกว่าสำหรับการดึงข้อมูลจาก Server ไทย
-            const proxy = "https://api.allorigins.win/get?url=";
-            const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
-            const urlPrice = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
+        // ใช้ Proxy ตัวใหม่ที่เสถียรกว่า (cors-anywhere แบบสาธารณะ)
+        const proxy = "https://api.allorigins.win/get?url=";
+        const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
+        const urlPrice = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
 
-            try {
-                // ดึงข้อมูลผ่าน Proxy เพื่อแก้ปัญหา CORS
-                const [resSeacon, resPrice] = await Promise.all([
-                    fetch(proxy + encodeURIComponent(urlSeacon)),
-                    fetch(proxy + encodeURIComponent(urlPrice))
-                ]);
+        try {
+            const [resSeacon, resPrice] = await Promise.all([
+                fetch(proxy + encodeURIComponent(urlSeacon)),
+                fetch(proxy + encodeURIComponent(urlPrice))
+            ]);
 
-                // สำหรับ AllOrigins ข้อมูลจริงจะอยู่ในฟิลด์ .contents (เป็น String)
-                const rawSeacon = await resSeacon.json();
-                const rawPrice = await resPrice.json();
+            const rawSeacon = await resSeacon.json();
+            const rawPrice = await resPrice.json();
 
-                const dataSeacon = JSON.parse(rawSeacon.contents);
-                const dataPrice = JSON.parse(rawPrice.contents);
+            // แกะข้อมูลจาก AllOrigins
+            const dataSeacon = JSON.parse(rawSeacon.contents);
+            const dataPrice = JSON.parse(rawPrice.contents);
 
-                // แสดงผลทองแท่ง 96.5%
-                document.getElementById('ask965').innerText = Number(dataSeacon.Ask965).toLocaleString();
-                document.getElementById('bid965').innerText = Number(dataSeacon.Bid965).toLocaleString();
-
-                // ตรวจสอบโครงสร้าง Array ของ GetPrice
-                console.log("Data Price Structure:", dataPrice); // ดูค่าใน Console ของ Chrome/Safari
-
-                if (Array.isArray(dataPrice) && dataPrice.length > 0) {
-                    const firstItem = dataPrice[0];
-                    // แสดงผล Spot Gold (ลองใช้ Bid หรือ Ask)
-                    document.getElementById('spot').innerText = "$" + (firstItem.Bid || firstItem.Ask || "N/A");
-                    // แสดงผลค่าเงินบาท
-                    document.getElementById('fx').innerText = (firstItem.FxBid || firstItem.FxAsk || "N/A") + " THB";
-                }
-
-                document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965;
-            } catch (e) {
-                console.error("Gem Error Log:", e);
-                updateTimeEl.innerText = "เกิดข้อผิดพลาด: ลองกด Refresh อีกครั้ง";
+            // แสดงผลทองแท่ง 96.5% (ใส่ตัวเช็คป้องกันค่า Null)
+            if (dataSeacon) {
+                const ask = dataSeacon.Ask965 || 0;
+                const bid = dataSeacon.Bid965 || 0;
+                document.getElementById('ask965').innerText = ask.toLocaleString();
+                document.getElementById('bid965').innerText = bid.toLocaleString();
+                document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "อัปเดตแล้ว";
             }
+
+            // แสดงผล Spot Gold และ FX (เช็คว่าเป็น Array และมีข้อมูลไหม)
+            if (Array.isArray(dataPrice) && dataPrice.length > 0) {
+                const item = dataPrice[0];
+                // ป้องกัน Error ด้วยการเช็คค่าก่อนใช้ toLocaleString
+                const spotVal = item.Bid || item.Ask || 0;
+                const fxVal = item.FxBid || item.FxAsk || 0;
+
+                document.getElementById('spot').innerText = "$" + (spotVal ? spotVal.toLocaleString() : "---");
+                document.getElementById('fx').innerText = (fxVal ? fxVal.toLocaleString() : "---") + " THB";
+            }
+
+        } catch (e) {
+            console.error("Gem Debug:", e);
+            updateTimeEl.innerText = "ดึงข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้าจอ";
         }
-        fetchGoldPrice();</script>
+    }
+    fetchGoldPrice();
+</script>
 </body>
 </html>
