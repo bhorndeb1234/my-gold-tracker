@@ -72,56 +72,38 @@
     <script>
         async function fetchGoldPrice() {
             const updateTimeEl = document.getElementById('updateTime');
-            updateTimeEl.innerText = "กำลังเชื่อมต่อเซิร์ฟเวอร์...";
+            updateTimeEl.innerText = "กำลังดึงข้อมูลผ่านระบบส่วนตัว...";
 
-            // ใช้ Proxy ตัวที่ค่อนข้างแรงและข้ามผ่าน Firewall ได้ดีกว่า
-            // ถ้าตัวแรกไม่ได้ เราจะสลับไปตัวสำรอง
-            const proxyUrl = "https://thingproxy.freeboard.io/fetch/";
+            // ใส่ URL ที่คุณก๊อปปี้มาจาก Google Script ตรงนี้
+            const myProxy = "https://script.google.com/macros/s/AKfycbypD3WSGeorBl0kCSzd7HHDUd8I2L7phTKfJMqQ4fZhE5_3oZgenG6nulP1tf2XLft_xg/exec";
+
             const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
             const urlPrice = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
 
             try {
-                // ดึงข้อมูลราคาทองแท่ง
-                const resSeacon = await fetch(proxyUrl + urlSeacon);
+                // ดึงราคาทอง 96.5%
+                const resSeacon = await fetch(myProxy + encodeURIComponent(urlSeacon));
                 const dataSeacon = await resSeacon.json();
 
-                if (dataSeacon) {
-                    document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
-                    document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
-                    document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "อัปเดตเรียบร้อย";
-                }
+                document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
+                document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
+                document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "อัปเดตแล้ว";
 
-                // ดึงข้อมูล Spot & FX
-                const resPrice = await fetch(proxyUrl + urlPrice);
+                // ดึง Spot & FX
+                const resPrice = await fetch(myProxy + encodeURIComponent(urlPrice));
                 const dataPrice = await resPrice.json();
 
-                if (Array.isArray(dataPrice) && dataPrice.length > 0) {
-                    const item = dataPrice[0];
-                    document.getElementById('spot').innerText = item.Bid ? "$" + item.Bid.toLocaleString() : "---";
-                    document.getElementById('fx').innerText = item.FxBid ? item.FxBid.toLocaleString() : "---";
+                if (dataPrice && dataPrice.length > 0) {
+                    document.getElementById('spot').innerText = "$" + (dataPrice[0].Bid || 0).toLocaleString();
+                    document.getElementById('fx').innerText = (dataPrice[0].FxBid || 0).toLocaleString();
                 }
-
             } catch (e) {
-                console.error("Gem Debug Error:", e);
-                // ถ้าพัง ให้ลองใช้ Proxy สำรอง (AllOrigins แบบลัด)
-                updateTimeEl.innerText = "กำลังใช้ช่องทางสำรอง...";
-                try {
-                    const altRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlSeacon)}`);
-                    const altData = await altRes.json();
-                    const finalData = JSON.parse(altData.contents);
-
-                    document.getElementById('ask965').innerText = finalData.Ask965.toLocaleString();
-                    document.getElementById('bid965').innerText = finalData.Bid965.toLocaleString();
-                    updateTimeEl.innerText = "โหลดผ่านช่องทางสำรองสำเร็จ";
-                } catch (err) {
-                    updateTimeEl.innerText = "เซิร์ฟเวอร์ปิดปรับปรุงชั่วคราว (ลองใหม่ภายหลัง)";
-                }
+                console.error("Gem Debug:", e);
+                updateTimeEl.innerText = "เกิดข้อผิดพลาด: โปรดเช็กการ Deploy Google Script";
             }
         }
-
         fetchGoldPrice();
-        // ตั้งค่าให้รีเฟรชทุก 1 นาทีอัตโนมัติ
-        setInterval(fetchGoldPrice, 30000);
+        setInterval(fetchGoldPrice, 60000);
     </script>
 </body>
 </html>
