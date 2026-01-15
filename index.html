@@ -43,7 +43,7 @@
         </button>
     </div>
 
-    <script>
+    <!-- <script>
         async function fetchGoldPrice() {
             const updateTimeEl = document.getElementById('updateTime');
             updateTimeEl.innerText = "กำลังอัปเดต...";
@@ -67,6 +67,43 @@
         }
         // โหลดครั้งแรกตอนเปิดเว็บ
         fetchGoldPrice();
-    </script>
+    </script> -->
+
+<script>
+    async function fetchGoldPrice() {
+        const updateTimeEl = document.getElementById('updateTime');
+        updateTimeEl.innerText = "กำลังอัปเดต...";
+
+        // ใช้ Proxy เพื่อแก้ปัญหา CORS ชั่วคราว (สำหรับการทดสอบ)
+        const proxy = "https://corsproxy.io/?";
+        const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
+        const urlPrice = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
+
+        try {
+            const [resSeacon, resPrice] = await Promise.all([
+                fetch(proxy + encodeURIComponent(urlSeacon)),
+                fetch(proxy + encodeURIComponent(urlPrice))
+            ]);
+
+            const dataSeacon = await resSeacon.json();
+            const dataPrice = await resPrice.json();
+
+            // แสดงผลทองแท่ง 96.5%
+            document.getElementById('ask965').innerText = dataSeacon.Ask965.toLocaleString();
+            document.getElementById('bid965').innerText = dataSeacon.Bid965.toLocaleString();
+
+            // แก้ไขจุดนี้: ข้อมูล Spot Gold และ FX อยู่ใน Index ที่ 0 ของ Array
+            if (dataPrice && dataPrice.length > 0) {
+                document.getElementById('spot').innerText = "$" + dataPrice[0].Bid.toLocaleString();
+                document.getElementById('fx').innerText = dataPrice[0].FxBid.toLocaleString() + " THB";
+            }
+
+            document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965;
+        } catch (e) {
+            console.error(e);
+            updateTimeEl.innerText = "Error: ไม่สามารถดึงข้อมูลได้ (เช็ก CORS)";
+        }
+    }
+</script>
 </body>
 </html>
