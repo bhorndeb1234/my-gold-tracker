@@ -72,52 +72,56 @@
     <script>
         async function fetchGoldPrice() {
             const updateTimeEl = document.getElementById('updateTime');
-            updateTimeEl.innerText = "กำลังอัปเดต...";
+            updateTimeEl.innerText = "กำลังเชื่อมต่อเซิร์ฟเวอร์...";
 
-            // เปลี่ยน Proxy เป็นตัวที่เสถียรขึ้นสำหรับเน็ตไทย
-            const proxy = "https://corsproxy.io/?url=";
+            // ใช้ Proxy ตัวที่ค่อนข้างแรงและข้ามผ่าน Firewall ได้ดีกว่า
+            // ถ้าตัวแรกไม่ได้ เราจะสลับไปตัวสำรอง
+            const proxyUrl = "https://thingproxy.freeboard.io/fetch/";
             const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
             const urlPrice = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
 
-            // ฟังก์ชันช่วยดึงข้อมูลแบบแยกกัน เพื่อไม่ให้พังไปด้วยกัน
-            async function getData(targetUrl) {
-                try {
-                    const response = await fetch(proxy + encodeURIComponent(targetUrl));
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    return await response.json();
-                } catch (err) {
-                    console.warn("Fetch failed for:", targetUrl, err);
-                    return null;
+            try {
+                // ดึงข้อมูลราคาทองแท่ง
+                const resSeacon = await fetch(proxyUrl + urlSeacon);
+                const dataSeacon = await resSeacon.json();
+
+                if (dataSeacon) {
+                    document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
+                    document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
+                    document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "อัปเดตเรียบร้อย";
                 }
-            }
 
-            // เริ่มดึงข้อมูล
-            const dataSeacon = await getData(urlSeacon);
-            const dataPrice = await getData(urlPrice);
+                // ดึงข้อมูล Spot & FX
+                const resPrice = await fetch(proxyUrl + urlPrice);
+                const dataPrice = await resPrice.json();
 
-            // แสดงผลทองแท่ง 96.5%
-            if (dataSeacon) {
-                document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
-                document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
-                document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "อัปเดตแล้ว";
-            }
+                if (Array.isArray(dataPrice) && dataPrice.length > 0) {
+                    const item = dataPrice[0];
+                    document.getElementById('spot').innerText = item.Bid ? "$" + item.Bid.toLocaleString() : "---";
+                    document.getElementById('fx').innerText = item.FxBid ? item.FxBid.toLocaleString() : "---";
+                }
 
-            // แสดงผล Spot Gold & FX
-            if (dataPrice && Array.isArray(dataPrice) && dataPrice.length > 0) {
-                const item = dataPrice[0];
-                document.getElementById('spot').innerText = item.Bid ? "$" + item.Bid.toLocaleString() : "---";
-                document.getElementById('fx').innerText = item.FxBid ? item.FxBid.toLocaleString() + " THB" : "---";
-            } else if (dataPrice && dataPrice.contents) {
-                // เผื่อกรณี Proxy ส่งกลับมาเป็น .contents (แบบ AllOrigins)
-                const nestedData = JSON.parse(dataPrice.contents);
-                const item = nestedData[0];
-                document.getElementById('spot').innerText = "$" + item.Bid.toLocaleString();
-                document.getElementById('fx').innerText = item.FxBid.toLocaleString() + " THB";
+            } catch (e) {
+                console.error("Gem Debug Error:", e);
+                // ถ้าพัง ให้ลองใช้ Proxy สำรอง (AllOrigins แบบลัด)
+                updateTimeEl.innerText = "กำลังใช้ช่องทางสำรอง...";
+                try {
+                    const altRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlSeacon)}`);
+                    const altData = await altRes.json();
+                    const finalData = JSON.parse(altData.contents);
+
+                    document.getElementById('ask965').innerText = finalData.Ask965.toLocaleString();
+                    document.getElementById('bid965').innerText = finalData.Bid965.toLocaleString();
+                    updateTimeEl.innerText = "โหลดผ่านช่องทางสำรองสำเร็จ";
+                } catch (err) {
+                    updateTimeEl.innerText = "เซิร์ฟเวอร์ปิดปรับปรุงชั่วคราว (ลองใหม่ภายหลัง)";
+                }
             }
         }
 
-        // รันทันทีเมื่อโหลดหน้าเว็บ
         fetchGoldPrice();
+        // ตั้งค่าให้รีเฟรชทุก 1 นาทีอัตโนมัติ
+        setInterval(fetchGoldPrice, 30000);
     </script>
 </body>
 </html>
