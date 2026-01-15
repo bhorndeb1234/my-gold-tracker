@@ -70,40 +70,50 @@
     </script> -->
 
 <script>
-    async function fetchGoldPrice() {
-        const updateTimeEl = document.getElementById('updateTime');
-        updateTimeEl.innerText = "กำลังอัปเดต...";
+async function fetchGoldPrice() {
+            const updateTimeEl = document.getElementById('updateTime');
+            updateTimeEl.innerText = "กำลังอัปเดต...";
 
-        // ใช้ Proxy เพื่อแก้ปัญหา CORS ชั่วคราว (สำหรับการทดสอบ)
-        const proxy = "https://corsproxy.io/?";
-        const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
-        const urlPrice = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
+            // ใช้ All-Origins Proxy ซึ่งเสถียรกว่าสำหรับการดึงข้อมูลจาก Server ไทย
+            const proxy = "https://api.allorigins.win/get?url=";
+            const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
+            const urlPrice = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
 
-        try {
-            const [resSeacon, resPrice] = await Promise.all([
-                fetch(proxy + encodeURIComponent(urlSeacon)),
-                fetch(proxy + encodeURIComponent(urlPrice))
-            ]);
+            try {
+                // ดึงข้อมูลผ่าน Proxy เพื่อแก้ปัญหา CORS
+                const [resSeacon, resPrice] = await Promise.all([
+                    fetch(proxy + encodeURIComponent(urlSeacon)),
+                    fetch(proxy + encodeURIComponent(urlPrice))
+                ]);
 
-            const dataSeacon = await resSeacon.json();
-            const dataPrice = await resPrice.json();
+                // สำหรับ AllOrigins ข้อมูลจริงจะอยู่ในฟิลด์ .contents (เป็น String)
+                const rawSeacon = await resSeacon.json();
+                const rawPrice = await resPrice.json();
 
-            // แสดงผลทองแท่ง 96.5%
-            document.getElementById('ask965').innerText = dataSeacon.Ask965.toLocaleString();
-            document.getElementById('bid965').innerText = dataSeacon.Bid965.toLocaleString();
+                const dataSeacon = JSON.parse(rawSeacon.contents);
+                const dataPrice = JSON.parse(rawPrice.contents);
 
-            // แก้ไขจุดนี้: ข้อมูล Spot Gold และ FX อยู่ใน Index ที่ 0 ของ Array
-            if (dataPrice && dataPrice.length > 0) {
-                document.getElementById('spot').innerText = "$" + dataPrice[0].Bid.toLocaleString();
-                document.getElementById('fx').innerText = dataPrice[0].FxBid.toLocaleString() + " THB";
+                // แสดงผลทองแท่ง 96.5%
+                document.getElementById('ask965').innerText = Number(dataSeacon.Ask965).toLocaleString();
+                document.getElementById('bid965').innerText = Number(dataSeacon.Bid965).toLocaleString();
+
+                // ตรวจสอบโครงสร้าง Array ของ GetPrice
+                console.log("Data Price Structure:", dataPrice); // ดูค่าใน Console ของ Chrome/Safari
+
+                if (Array.isArray(dataPrice) && dataPrice.length > 0) {
+                    const firstItem = dataPrice[0];
+                    // แสดงผล Spot Gold (ลองใช้ Bid หรือ Ask)
+                    document.getElementById('spot').innerText = "$" + (firstItem.Bid || firstItem.Ask || "N/A");
+                    // แสดงผลค่าเงินบาท
+                    document.getElementById('fx').innerText = (firstItem.FxBid || firstItem.FxAsk || "N/A") + " THB";
+                }
+
+                document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965;
+            } catch (e) {
+                console.error("Gem Error Log:", e);
+                updateTimeEl.innerText = "เกิดข้อผิดพลาด: ลองกด Refresh อีกครั้ง";
             }
-
-            document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965;
-        } catch (e) {
-            console.error(e);
-            updateTimeEl.innerText = "Error: ไม่สามารถดึงข้อมูลได้ (เช็ก CORS)";
         }
-    }
-</script>
+        fetchGoldPrice();</script>
 </body>
 </html>
