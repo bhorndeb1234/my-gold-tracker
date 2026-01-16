@@ -123,37 +123,36 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAU/USD) ---
+            // --- 3. ดึง Gold Spot (ราคาโลก - แม่นยำใกล้เคียง OANDA) ---
             try {
-                // ใช้ API ตัวเดิมที่คุณดึงค่าเงินบาท แต่เปลี่ยน Base เป็น XAU (ทองคำ)
-                // 1 XAU จะเท่ากับกี่ USD? นั่นคือคำตอบของ Gold Spot ครับ
-                const urlXAU = "https://api.exchangerate-api.com/v4/latest/XAU";
-
-                // ดึงผ่าน Proxy ของคุณ
-                const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlXAU));
+                // ใช้ AllOrigins Proxy เพื่อดึงข้อมูลจาก Binance โดยตรง
+                const targetUrl = "https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT";
+                const resSpot = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
                 const dataSpot = await resSpot.json();
 
-                console.log("XAU Data:", dataSpot);
+                // AllOrigins จะห่อข้อมูลไว้ใน dataSpot.contents
+                const binanceData = JSON.parse(dataSpot.contents);
 
-                if (dataSpot && dataSpot.rates && dataSpot.rates.USD) {
-                    // ในระบบนี้ 1 ทอง (XAU) = X ดอลลาร์ (USD)
-                    const price = parseFloat(dataSpot.rates.USD);
-
+                if (binanceData && binanceData.price) {
+                    const price = parseFloat(binanceData.price);
                     document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Spot Gold Updated (XAU API):", price);
+                    console.log("✅ Spot Gold Updated (Binance via AllOrigins):", price);
                 } else {
-                    throw new Error("Format Mismatch from XAU API");
+                    throw new Error("AllOrigins/Binance Mismatch");
                 }
+
             } catch (e) {
                 console.error("Spot Error:", e);
-                // แผนสำรอง: ดึงจาก Bitfinex แบบไม่มีเครื่องหมาย : (ที่เราเคยคุยกัน)
+
+                // แผนสำรองสุดท้าย: ดึงราคาจาก Bitfinex ผ่าน Google Proxy ของคุณ
                 try {
-                    const resBF = await fetch(myProxy + "?url=" + encodeURIComponent("https://api-pub.bitfinex.com/v2/ticker/tXAUUSD"));
+                    const urlBF = "https://api-pub.bitfinex.com/v2/ticker/tXAUUSD";
+                    const resBF = await fetch(myProxy + "?url=" + encodeURIComponent(urlBF));
                     const dataBF = await resBF.json();
-                    if (Array.isArray(dataBF)) {
+                    if (Array.isArray(dataBF) && dataBF[6]) {
                         document.getElementById('spot').innerText = "$" + dataBF[6].toLocaleString();
                     }
                 } catch (err) {
