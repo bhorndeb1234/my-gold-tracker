@@ -15,12 +15,12 @@
             <div class="flex justify-around mt-2">
               <div>
                   <p class="text-xs text-green-400">รับซื้อ</p>
-                  <p id="bid965" class="text-2xl font-bold text-green-500">---</p>
+                  <p id="bid965" class="text-2xl font-bold text-green-800">---</p>
               </div>
               <div class="border-l border-gray-600"></div>
                 <div>
                     <p class="text-xs text-red-400">ขายออก</p>
-                    <p id="ask965" class="text-2xl font-bold text-red-500">---</p>
+                    <p id="ask965" class="text-2xl font-bold text-red-800">---</p>
                 </div>
             </div>
         </div>
@@ -89,7 +89,7 @@
         const updateTimeEl = document.getElementById('updateTime');
         updateTimeEl.innerText = "กำลังอัปเดต...";
 
-        const myProxy = "https://script.google.com/macros/s/AKfycbz1LLP-_wdzY01sFLkxpam03jAb5aQcu-jwRP2k2k7p6YTE7QPgzfiAmqvG-6LZS4dx_w/exec?url=";
+        const myProxy = "https://script.google.com/macros/s/AKfycbxK4aDuezUe5j1-bujlSOWzO6AjskqEov-zRihXn_cDr_vYECI3gwynn4QvoXpiwnQG0g/exec?url=";
 
         // 1. ดึงราคาทองไทย (ผ่าน Proxy)
         try {
@@ -150,35 +150,6 @@
 
     // 2. ฟังก์ชันตกแต่งเพิ่มเติม (ถ้าต้องการให้ราคาขยับแล้วมีสี)
     // คุณสามารถเพิ่ม Logic ตรวจสอบได้ว่าถ้าราคาใหม่ > ราคาเก่า ให้เป็นสีเขียวชั่วคราวได้ครับ
-
-    // ฟังก์ชันทดสอบดึง Spot Gold จาก Binance ผ่าน Proxy
-    async function testBinanceProxy() {
-        const myProxy = "URL_GOOGLE_SCRIPT_ใหม่ของคุณ"; // ใส่ URL ที่ได้จากขั้นตอนที่ 1
-        const binanceUrl = "https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT";
-
-        try {
-            const response = await fetch(myProxy + "?url=" + encodeURIComponent(binanceUrl));
-            const data = await response.json();
-
-            console.log("Binance Proxy Response:", data);
-
-            if (data.price) {
-                const price = parseFloat(data.price);
-                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
-                console.log("✅ Success! Price is:", price);
-            } else if (data.error) {
-                console.error("❌ Binance Blocked Google:", data.message);
-                document.getElementById('spot').innerText = "Blocked by Region";
-            }
-        } catch (e) {
-            console.error("❌ Fetch Error:", e);
-            document.getElementById('spot').innerText = "Connection Error";
-        }
-    }
-
-    // เรียกใช้งาน
-    testBinanceProxy();
-
     </script>
 
 
