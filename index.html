@@ -95,7 +95,7 @@
         const updateTimeEl = document.getElementById('updateTime');
         updateTimeEl.innerText = "กำลังอัปเดต...";
 
-        const myProxy = "https://script.google.com/macros/s/AKfycbxK4aDuezUe5j1-bujlSOWzO6AjskqEov-zRihXn_cDr_vYECI3gwynn4QvoXpiwnQG0g/exec?url=";
+        const myProxy = "https://script.google.com/macros/s/AKfycbxZyaUpH_aTrIVviZiEOxw8vjkifCfTR09QkRGTmWjZ_4ti83Ak0wxaxvTocS3RIrZb2A/exec?url=";
 
         // 1. ดึงราคาทองไทย (ผ่าน Proxy)
         try {
@@ -119,31 +119,26 @@
             document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot (ราคาโลก) - เปลี่ยนไปใช้ KuCoin แทน Binance
+        // 3. ดึง Gold Spot (ราคาโลก) - จาก CoinGecko ผ่าน Proxy
         try {
-            // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
-            const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
-            const resSpot = await fetch(myProxy + encodeURIComponent(urlKuCoin));
-            const rawData = await resSpot.json();
+            const urlCG = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd";
+            const resSpot = await fetch(myProxy + encodeURIComponent(urlCG));
+            const dataCG = await resSpot.json();
 
-            console.log("Raw Spot Data (KuCoin):", rawData);
-
-            if (rawData && rawData.data && rawData.data.price) {
-                const price = parseFloat(rawData.data.price);
-                document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+            // ตรวจสอบโครงสร้างข้อมูลของ CoinGecko: { "pax-gold": { "usd": 2845.50 } }
+            if (dataCG && dataCG['pax-gold'] && dataCG['pax-gold'].usd) {
+                const price = dataCG['pax-gold'].usd;
+                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
             } else {
-                // แผนสำรองสุดท้าย: ถ้า KuCoin พัง ให้ใช้ราคาจาก CoinGecko
-                const urlCG = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd";
-                const resCG = await fetch(myProxy + encodeURIComponent(urlCG));
-                const dataCG = await resCG.json();
-                const priceCG = dataCG['pax-gold'].usd;
-                document.getElementById('spot').innerText = "$ " + priceCG.toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('spot').innerText = "Data Error";
             }
         } catch (e) {
-            console.error("Spot Error:", e);
+            console.error("CoinGecko Error:", e);
             document.getElementById('spot').innerText = "รอข้อมูล...";
         }
-
 
     }
 
