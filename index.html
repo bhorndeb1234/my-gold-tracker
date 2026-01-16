@@ -93,7 +93,7 @@
     <script>
         async function fetchGoldPrice() {
             // 1. URL Proxy (ห้ามลืม /exec ที่ส่วนท้าย)
-            const myProxy = "https://script.google.com/macros/s/AKfycbz4ZlKhcUzf74B30kihJuSrri3WWI7rZp5svJgJXyiyib1rqmubPtKW2OUx_o5-8jpG6g/exec";
+            const myProxy = "https://script.google.com/macros/s/AKfycbwb_jVruI7zxz4GgXDI2pemeh2G0hCPlwPvhER8jpMsXr1L2WHkjtH52h-9GgQENz27NQ/exec";
 
             // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
             try {
@@ -123,26 +123,24 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAUUSD จาก Kraken) ---
+            // --- 3. ดึง Gold Spot (ราคาโลกจริง) ---
             try {
                 const resSpot = await fetch(myProxy); // URL จาก Google Script ตัวใหม่
                 const rawData = await resSpot.json();
 
-                console.log("Spot Data (Kraken Raw):", rawData);
+                console.log("Spot Data (Binance Raw):", rawData);
 
-                // โครงสร้าง Kraken: result.XAUUSD.c[0] (c[0] คือราคาปิดล่าสุด)
-                if (rawData && rawData.result) {
-                    // Kraken อาจใช้ชื่อ XAUUSD หรือ XAUZUSD ในบางครั้ง เราจึงต้องดึงผ่าน Object.values
-                    const pairData = Object.values(rawData.result)[0];
-                    const price = parseFloat(pairData.c[0]);
+                // โครงสร้าง Binance ง่ายมาก: { "symbol": "PAXGUSDT", "price": "2750.50" }
+                if (rawData && rawData.price) {
+                    const price = parseFloat(rawData.price);
 
                     document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Spot Gold Updated (Kraken):", price);
+                    console.log("✅ Spot Gold Updated (Binance):", price);
                 } else {
-                    throw new Error("Kraken Format Error");
+                    throw new Error("Binance Format Error");
                 }
             } catch (e) {
                 console.error("Spot Error:", e);
