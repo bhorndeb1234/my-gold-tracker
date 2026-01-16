@@ -72,48 +72,56 @@
     <script>
         async function fetchGoldPrice() {
             const updateTimeEl = document.getElementById('updateTime');
-            updateTimeEl.innerText = "กำลังดึงข้อมูลผ่านระบบส่วนตัว...";
+            updateTimeEl.innerText = "กำลังดึงข้อมูลจากฮั่วเซ่งเฮง...";
 
-            // ใส่ URL ที่คุณก๊อปปี้มาจาก Google Script ตรงนี้
+            // เปลี่ยน YOUR_GOOGLE_SCRIPT_URL เป็น URL ของคุณ
             const myProxy = "https://script.google.com/macros/s/AKfycbypD3WSGeorBl0kCSzd7HHDUd8I2L7phTKfJMqQ4fZhE5_3oZgenG6nulP1tf2XLft_xg/exec?url=";
-
             const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
             const urlPrice = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
 
             try {
-                // ดึงราคาทอง 96.5%
+                // 1. ดึงราคาทองแท่ง 96.5%
                 const resSeacon = await fetch(myProxy + encodeURIComponent(urlSeacon));
                 const dataSeacon = await resSeacon.json();
 
-                document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
-                document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
-                document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "อัปเดตแล้ว";
-
-                // แสดงผล Spot & FX (ปรับตามข้อมูลที่คุณกางออกมา)
-                if (dataPrice && dataPrice.length > 0) {
-                    const item = dataPrice[0]; // ใช้ชุดข้อมูลแรก (HSH)
-
-                    // เนื่องจาก Bid/FxBid เป็น null เราจะใช้ Sell และข้อมูลอื่นมาโชว์แทนชั่วคราว
-                    // และต้องลบคอมมาออกก่อนแปลงเป็นตัวเลข
-                    const sellPrice = item.Sell ? item.Sell.replace(/,/g, '') : "0";
-                    const buyPrice = item.Buy ? item.Buy.replace(/,/g, '') : "0";
-
-                    // แสดงราคาขาย (Sell) แทน Spot ไปก่อนเพื่อให้เห็นตัวเลข
-                    document.getElementById('spot').innerText = "฿" + Number(sellPrice).toLocaleString();
-
-                    // แสดงราคารับซื้อ (Buy) แทน FX ไปก่อน
-                    document.getElementById('fx').innerText = "รับซื้อ: ฿" + Number(buyPrice).toLocaleString();
-
-                    // เปลี่ยนหัวข้อบนหน้าเว็บให้ตรงกับข้อมูลจริง (ถ้าต้องการ)
-                    // document.querySelector("p:contains('Spot Gold')").innerText = "ราคาขาย (Sell)";
+                if (dataSeacon) {
+                    document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
+                    document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
+                    document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "อัปเดตแล้ว";
                 }
+
+                // 2. ดึง Spot & FX (จากชุดข้อมูลที่คุณกางดูใน Console)
+                const resPrice = await fetch(myProxy + encodeURIComponent(urlPrice));
+                const dataPrice = await resPrice.json();
+
+                console.log("ตรวจสอบข้อมูลดิบ:", dataPrice);
+
+                if (dataPrice && dataPrice.length > 0) {
+                    const item = dataPrice[0]; // เลือก GoldType: "HSH"
+
+                    // แปลง String "68,470" ให้เป็นตัวเลขโดยลบคอมมาออกก่อน
+                    const cleanSell = item.Sell ? item.Sell.replace(/,/g, '') : "0";
+                    const cleanBuy = item.Buy ? item.Buy.replace(/,/g, '') : "0";
+
+                    // แสดงผล (ใช้ราคาขายเป็น Spot ชั่วคราว และราคารับซื้อเป็น FX ตามที่ข้อมูลมี)
+                    document.getElementById('spot').innerText = "฿" + Number(cleanSell).toLocaleString();
+                    document.getElementById('fx').innerText = "รับซื้อ: ฿" + Number(cleanBuy).toLocaleString();
+
+                    // เปลี่ยนข้อความกำกับหน้าเว็บให้ตรงกับข้อมูล (ถ้าต้องการ)
+                    // document.getElementById('spot-label').innerText = "ราคาขายออก";
+                }
+
             } catch (e) {
-                console.error("Gem Debug:", e);
-                updateTimeEl.innerText = "เกิดข้อผิดพลาด: โปรดเช็กการ Deploy Google Script";
+                console.error("Gem Debug Error:", e);
+                updateTimeEl.innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณารีเฟรช";
             }
         }
+
+        // รันทันที
         fetchGoldPrice();
+        // รีเฟรชอัตโนมัติทุก 1 นาที
         setInterval(fetchGoldPrice, 60000);
     </script>
+
 </body>
 </html>
