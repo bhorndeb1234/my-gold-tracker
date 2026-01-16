@@ -113,21 +113,17 @@
             document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot จาก Binance (ผ่าน Proxy + สั่งให้ตาม Redirect)
+        // 3. ดึง Gold Spot จาก CoinCap (ดึงตรงได้เลย ไม่ติด CORS)
         try {
-            const urlBinance = "https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT";
-
-            // เพิ่ม { redirect: 'follow' } เพื่อแก้ปัญหา Google Script Redirect
-            const resSpot = await fetch(myProxy + encodeURIComponent(urlBinance), {
-                method: 'GET',
-                redirect: 'follow'
-            });
-
+            const resSpot = await fetch("https://api.coincap.io/v2/assets/pax-gold");
             const dataSpot = await resSpot.json();
 
-            if (dataSpot && dataSpot.price) {
-                const price = parseFloat(dataSpot.price);
-                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+            if (dataSpot && dataSpot.data) {
+                const price = parseFloat(dataSpot.data.priceUsd);
+                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
             } else {
                 document.getElementById('spot').innerText = "Data Error";
             }
@@ -135,7 +131,6 @@
             console.error("Spot Error:", e);
             document.getElementById('spot').innerText = "รอข้อมูล...";
         }
-
     }
 
     // เรียกทำงานทันทีที่โหลดหน้า
