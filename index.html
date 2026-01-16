@@ -93,14 +93,14 @@
 <script>
     async function fetchGoldPrice() {
       // 1. แก้ไข URL Proxy (ตัดส่วนท้ายที่พิมพ์ผิดออก)
-      const myProxy = "https://script.google.com/macros/s/AKfycbxlmTz7co1Dgq6WtrJ0zidNQYxDSqrk1pqwU7yh5rOwpKbX7AjfIVD4FNxzca6HMp4Huw/exec";
+      const myProxy = "https://script.google.com/macros/s/AKfycbxK4aDuezUe5j1-bujlSOWzO6AjskqEov-zRihXn_cDr_vYECI3gwynn4QvoXpiwnQG0g/exec";
 
       // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
       try {
           const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
 
           // เชื่อมต่อด้วย ?url= ให้ถูกต้องเพียงตัวเดียว
-          const resSeacon = await fetch(myProxy + "?url=" + encodeURIComponent(urlSeacon));
+          const resSeacon = await fetch(encodeURIComponent(urlSeacon));
           const dataSeacon = await resSeacon.json();
 
           console.log("Thai Gold Data:", dataSeacon);
@@ -124,21 +124,29 @@
           document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
       } catch (e) { console.error("FX Error:", e); }
 
-      // --- 3. ดึง Gold Spot (ราคาโลกจาก KuCoin) ---
+      // 3. ดึง Gold Spot (ราคาโลก) - เปลี่ยนไปใช้ KuCoin แทน Binance
       try {
-          // เรียกผ่าน Proxy เฉยๆ (เพราะเราตั้ง Default ใน Google Script ให้ดึง KuCoin ไว้แล้ว)
-          const resSpot = await fetch(myProxy);
+          // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
+          const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
+          const resSpot = await fetch(myProxy + encodeURIComponent(urlKuCoin));
           const rawData = await resSpot.json();
 
-          console.log("Spot Data from KuCoin:", rawData);
+          console.log("Raw Spot Data (KuCoin):", rawData);
 
           if (rawData && rawData.data && rawData.data.price) {
               const price = parseFloat(rawData.data.price);
-              document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+              document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+          } else {
+              // แผนสำรองสุดท้าย: ถ้า KuCoin พัง ให้ใช้ราคาจาก CoinGecko
+              const urlCG = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd";
+              const resCG = await fetch(myProxy + encodeURIComponent(urlCG));
+              const dataCG = await resCG.json();
+              const priceCG = dataCG['pax-gold'].usd;
+              document.getElementById('spot').innerText = "$ " + priceCG.toLocaleString(undefined, {minimumFractionDigits: 2});
           }
       } catch (e) {
-          console.error("Spot Error", e);
-          document.getElementById('spot').innerText = "Data Error";
+          console.error("Spot Error:", e);
+          document.getElementById('spot').innerText = "รอข้อมูล...";
       }
   }
 
