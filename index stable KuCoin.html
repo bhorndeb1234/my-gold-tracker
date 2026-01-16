@@ -123,30 +123,25 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจาก Bitfinex) ---
+            // --- 3. ดึง Gold Spot (KuCoin) ---
             try {
-                // ใช้ Symbol tXAU:UST ซึ่งคือ Gold Spot vs US Dollar จริงๆ
-                const urlBitfinex = "https://api-pub.bitfinex.com/v2/ticker/tXAU:UST";
+                const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
 
-                // ดึงผ่าน Proxy ของคุณเหมือนเดิม
-                const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlBitfinex));
+                // ต้องประกอบร่าง: Proxy + ?url= + เป้าหมาย
+                const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlKuCoin));
                 const rawData = await resSpot.json();
 
-                console.log("Spot Data (Bitfinex):", rawData);
+                console.log("Raw Spot Data (KuCoin):", rawData);
 
-                // Bitfinex ส่งกลับมาเป็น Array: Index 6 คือราคาล่าสุด (Last Price)
-                if (Array.isArray(rawData) && rawData[6]) {
-                    const price = parseFloat(rawData[6]);
-                    document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                    console.log("✅ Real Gold Spot Updated:", price);
+                if (rawData && rawData.data && rawData.data.price) {
+                    const price = parseFloat(rawData.data.price);
+                    document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {minimumFractionDigits: 2});
                 }
             } catch (e) {
                 console.error("Spot Error:", e);
                 document.getElementById('spot').innerText = "รอข้อมูล...";
-            }        }
+            }
+        }
 
         // อย่าลืมเรียกฟังก์ชันให้ทำงาน
         fetchGoldPrice();
