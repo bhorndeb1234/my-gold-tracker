@@ -93,7 +93,7 @@
     <script>
         async function fetchGoldPrice() {
             // 1. URL Proxy (ห้ามลืม /exec ที่ส่วนท้าย)
-            const myProxy = "https://script.google.com/macros/s/AKfycbyh-5dpqsbBBeV14arf71wOV_DSpDuG8AaV0Lb_vGSQwQK6xK6vimVtm6ZKXWR89wqfGQ/exec";
+            const myProxy = "https://script.google.com/macros/s/AKfycbz4ZlKhcUzf74B30kihJuSrri3WWI7rZp5svJgJXyiyib1rqmubPtKW2OUx_o5-8jpG6g/exec";
 
             // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
             try {
@@ -123,24 +123,26 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAUUSD) ---
+            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAUUSD จาก Kraken) ---
             try {
-                const resSpot = await fetch(myProxy); // ดึงผ่าน Proxy ของคุณ
+                const resSpot = await fetch(myProxy); // URL จาก Google Script ตัวใหม่
                 const rawData = await resSpot.json();
 
-                console.log("Spot Data (Bitfinex Raw):", rawData);
+                console.log("Spot Data (Kraken Raw):", rawData);
 
-                // Bitfinex ส่งมาเป็น Array: Index 6 คือราคาล่าสุด
-                if (Array.isArray(rawData) && rawData.length >= 7) {
-                    const price = parseFloat(rawData[6]);
+                // โครงสร้าง Kraken: result.XAUUSD.c[0] (c[0] คือราคาปิดล่าสุด)
+                if (rawData && rawData.result) {
+                    // Kraken อาจใช้ชื่อ XAUUSD หรือ XAUZUSD ในบางครั้ง เราจึงต้องดึงผ่าน Object.values
+                    const pairData = Object.values(rawData.result)[0];
+                    const price = parseFloat(pairData.c[0]);
+
                     document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Spot Gold Updated (Bitfinex):", price);
+                    console.log("✅ Spot Gold Updated (Kraken):", price);
                 } else {
-                    // หากได้ข้อมูลผิดปกติ ให้ลองดึงราคาสัมรอง (PAXG)
-                    throw new Error("Bitfinex Format Error");
+                    throw new Error("Kraken Format Error");
                 }
             } catch (e) {
                 console.error("Spot Error:", e);
