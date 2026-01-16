@@ -113,16 +113,30 @@
             document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot จาก Binance (ดึงตรง ไม่ต้องผ่าน Proxy)
+        // 3. ดึง Gold Spot จาก Binance (ส่งผ่าน Proxy เพื่อเลี่ยง CORS)
         try {
-            // Binance อนุญาตให้ fetch ได้เลย ไม่ติด CORS
-            const resSpot = await fetch("https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT");
+            const urlBinance = "https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT";
+            const resSpot = await fetch(myProxy + encodeURIComponent(urlBinance));
             const dataSpot = await resSpot.json();
-            const price = parseFloat(dataSpot.price);
-            document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            // ตรวจสอบว่าข้อมูลมาจาก Google Script ในรูปแบบไหน
+            let price;
+            if (dataSpot.price) {
+                price = parseFloat(dataSpot.price);
+            } else if (dataSpot.contents) {
+                // กรณี Proxy คืนค่ามาใน contents
+                const nestedData = JSON.parse(dataSpot.contents);
+                price = parseFloat(nestedData.price);
+            }
+
+            if (price) {
+                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+            } else {
+                throw new Error("Price not found");
+            }
         } catch (e) {
             console.error("Spot Error:", e);
-            document.getElementById('spot').innerText = "Service Down";
+            document.getElementById('spot').innerText = "กำลังรอข้อมูล...";
         }
     }
 
