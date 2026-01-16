@@ -123,43 +123,39 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAU/USD - แม่นยำเท่า OANDA) ---
+            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAU/USD) ---
             try {
-                // API นี้ให้ราคาทองโลก (XAU/USD) โดยตรง
-                const urlGold = "https://api.invertir.com/api/v1/prices/XAUUSD";
+                // ใช้ API ตัวเดิมที่คุณดึงค่าเงินบาท แต่เปลี่ยน Base เป็น XAU (ทองคำ)
+                // 1 XAU จะเท่ากับกี่ USD? นั่นคือคำตอบของ Gold Spot ครับ
+                const urlXAU = "https://api.exchangerate-api.com/v4/latest/XAU";
 
-                const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlGold));
+                // ดึงผ่าน Proxy ของคุณ
+                const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlXAU));
                 const dataSpot = await resSpot.json();
 
-                console.log("Real Spot Data:", dataSpot);
+                console.log("XAU Data:", dataSpot);
 
-                // โครงสร้างของ Invertir มักจะเป็น { price: 2750.50 } หรือ { last: 2750.50 }
-                // แต่ถ้ามันเข้าไม่ได้ เราจะใช้ Fallback ไปที่ GoldPrice API
-                let price = dataSpot.price || dataSpot.last || (dataSpot[0] && dataSpot[0].price);
+                if (dataSpot && dataSpot.rates && dataSpot.rates.USD) {
+                    // ในระบบนี้ 1 ทอง (XAU) = X ดอลลาร์ (USD)
+                    const price = parseFloat(dataSpot.rates.USD);
 
-                if (price) {
-                    document.getElementById('spot').innerText = "$" + parseFloat(price).toLocaleString(undefined, {
+                    document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Real Spot Gold (OANDA Match):", price);
+                    console.log("✅ Spot Gold Updated (XAU API):", price);
                 } else {
-                    throw new Error("Format Mismatch");
+                    throw new Error("Format Mismatch from XAU API");
                 }
-
             } catch (e) {
                 console.error("Spot Error:", e);
-
-                // --- แผนสำรอง (ถ้าอันแรกพัง): ใช้ข้อมูลจาก Exchange-API ที่เสถียรมาก ---
+                // แผนสำรอง: ดึงจาก Bitfinex แบบไม่มีเครื่องหมาย : (ที่เราเคยคุยกัน)
                 try {
-                    const resAlt = await fetch(myProxy + "?url=" + encodeURIComponent("https://api.exchangerate-api.com/v4/latest/XAU"));
-                    const dataAlt = await resAlt.json();
-                    // ราคาจะเป็น 1/ราคาออนซ์ ดังนั้นต้องเอา 1 หาร
-                    const spotPrice = 1 / dataAlt.rates.USD;
-                    document.getElementById('spot').innerText = "$" + spotPrice.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
+                    const resBF = await fetch(myProxy + "?url=" + encodeURIComponent("https://api-pub.bitfinex.com/v2/ticker/tXAUUSD"));
+                    const dataBF = await resBF.json();
+                    if (Array.isArray(dataBF)) {
+                        document.getElementById('spot').innerText = "$" + dataBF[6].toLocaleString();
+                    }
                 } catch (err) {
                     document.getElementById('spot').innerText = "รอข้อมูล...";
                 }
