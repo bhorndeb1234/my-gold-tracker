@@ -113,23 +113,25 @@
             document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot จาก CoinCap (ดึงตรงได้เลย ไม่ติด CORS)
+        // 3. ดึง Gold Spot (ราคาโลก) - ระบบ 2 ชั้น
         try {
+            // ลองดึงจาก CoinCap ก่อน
             const resSpot = await fetch("https://api.coincap.io/v2/assets/pax-gold");
             const dataSpot = await resSpot.json();
-
-            if (dataSpot && dataSpot.data) {
-                const price = parseFloat(dataSpot.data.priceUsd);
-                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-            } else {
-                document.getElementById('spot').innerText = "Data Error";
-            }
+            const price = parseFloat(dataSpot.data.priceUsd);
+            document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
         } catch (e) {
-            console.error("Spot Error:", e);
-            document.getElementById('spot').innerText = "รอข้อมูล...";
+            console.warn("CoinCap failed, trying backup...");
+            try {
+                // ถ้า CoinCap พัง ให้สลับมาดึงจาก Messari (ตัวสำรองที่เสถียรมาก)
+                const resBackup = await fetch("https://data.messari.io/api/v1/assets/paxg/metrics");
+                const dataBackup = await resBackup.json();
+                const priceBackup = dataBackup.data.market_data.price_usd;
+                document.getElementById('spot').innerText = "$" + priceBackup.toLocaleString(undefined, {minimumFractionDigits: 2});
+            } catch (err) {
+                console.error("All Spot APIs failed:", err);
+                document.getElementById('spot').innerText = "Connecting...";
+            }
         }
     }
 
