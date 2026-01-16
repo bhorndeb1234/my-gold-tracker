@@ -89,7 +89,7 @@
         const updateTimeEl = document.getElementById('updateTime');
         updateTimeEl.innerText = "กำลังอัปเดต...";
 
-        const myProxy = "https://script.google.com/macros/s/AKfycbypD3WSGeorBl0kCSzd7HHDUd8I2L7phTKfJMqQ4fZhE5_3oZgenG6nulP1tf2XLft_xg/exec?url=";
+        const myProxy = "https://script.google.com/macros/s/AKfycbysQOi3j8w_5g29oUMYE54r131UN33aIvYe2ZUt1fh_GXBdDBDHMw_Gx-2fTPEakNX8ZA/exec?url=";
 
         // 1. ดึงราคาทองไทย (ผ่าน Proxy)
         try {
@@ -113,31 +113,29 @@
             document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot จาก Binance (ส่งผ่าน Proxy เพื่อเลี่ยง CORS)
+        // 3. ดึง Gold Spot จาก Binance (ผ่าน Proxy + สั่งให้ตาม Redirect)
         try {
             const urlBinance = "https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT";
-            const resSpot = await fetch(myProxy + encodeURIComponent(urlBinance));
+
+            // เพิ่ม { redirect: 'follow' } เพื่อแก้ปัญหา Google Script Redirect
+            const resSpot = await fetch(myProxy + encodeURIComponent(urlBinance), {
+                method: 'GET',
+                redirect: 'follow'
+            });
+
             const dataSpot = await resSpot.json();
 
-            // ตรวจสอบว่าข้อมูลมาจาก Google Script ในรูปแบบไหน
-            let price;
-            if (dataSpot.price) {
-                price = parseFloat(dataSpot.price);
-            } else if (dataSpot.contents) {
-                // กรณี Proxy คืนค่ามาใน contents
-                const nestedData = JSON.parse(dataSpot.contents);
-                price = parseFloat(nestedData.price);
-            }
-
-            if (price) {
+            if (dataSpot && dataSpot.price) {
+                const price = parseFloat(dataSpot.price);
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
             } else {
-                throw new Error("Price not found");
+                document.getElementById('spot').innerText = "Data Error";
             }
         } catch (e) {
             console.error("Spot Error:", e);
-            document.getElementById('spot').innerText = "กำลังรอข้อมูล...";
+            document.getElementById('spot').innerText = "รอข้อมูล...";
         }
+
     }
 
     // เรียกทำงานทันทีที่โหลดหน้า
