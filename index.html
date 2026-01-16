@@ -93,7 +93,7 @@
     <script>
         async function fetchGoldPrice() {
             // 1. URL Proxy (ห้ามลืม /exec ที่ส่วนท้าย)
-            const myProxy = "https://script.google.com/macros/s/AKfycbyDpdK2VKD9n_sGIcoqh6g-iFJvS_xvjd8CbIydL3FmPKQTpwxrXDigB-K6DTXZDOnaBQ/exec";
+            const myProxy = "https://script.google.com/macros/s/AKfycbwBGRaAh62rESAkPskgVTKxFBI-D24AW49hATanMPon4ebwWlAfRmQyqB9I_suSYO_-1w/exec";
 
             // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
             try {
@@ -123,39 +123,29 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAUUSD) ---
+            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAUUSD ผ่าน CoinGecko) ---
             try {
-                const resSpot = await fetch(myProxy); // ดึงผ่าน Proxy ของคุณ
-                const rawData = await resSpot.json();
+                // ดึงผ่าน Proxy ของคุณ (ซึ่งตอนนี้ชี้ไปที่ CoinGecko โดยตรง)
+                const resSpot = await fetch(myProxy);
+                const dataSpot = await resSpot.json();
 
-                console.log("Spot Data (Bitget):", rawData);
+                console.log("Spot Data (CoinGecko):", dataSpot);
 
-                // โครงสร้าง Bitget: data[0].lastPr
-                if (rawData && rawData.data && rawData.data[0]) {
-                    const price = parseFloat(rawData.data[0].lastPr);
+                if (dataSpot && dataSpot['pax-gold'] && dataSpot['pax-gold'].usd) {
+                    const price = parseFloat(dataSpot['pax-gold'].usd);
 
                     document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Spot Gold Updated (Bitget XAUUSD):", price);
+                    console.log("✅ Spot Gold Updated:", price);
                 } else {
-                    throw new Error("Bitget Format Mismatch");
+                    throw new Error("Data Format Error");
                 }
 
             } catch (e) {
                 console.error("Spot Error:", e);
-
-                // แผนสำรองสุดท้าย: ดึงจาก CryptoCompare (Symbol: XAU)
-                try {
-                    const resAlt = await fetch(myProxy + "?url=" + encodeURIComponent("https://min-api.cryptocompare.com/data/price?fsym=XAU&tsyms=USD"));
-                    const dataAlt = await resAlt.json();
-                    if (dataAlt && dataAlt.USD) {
-                        document.getElementById('spot').innerText = "$" + dataAlt.USD.toLocaleString();
-                    }
-                } catch(err) {
-                    document.getElementById('spot').innerText = "กำลังอัปเดต...";
-                }
+                document.getElementById('spot').innerText = "รอข้อมูล...";
             }
 
 
