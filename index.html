@@ -90,69 +90,60 @@
         fetchGoldPrice();
     </script> -->
 
-    <script>
+<script>
     async function fetchGoldPrice() {
-        const myProxy = "https://script.google.com/macros/s/AKfycbxlmTz7co1Dgq6WtrJ0zidNQYxDSqrk1pqwU7yh5rOwpKbX7AjfIVD4FNxzca6HMp4Huw/exec?utl=";
+      // 1. แก้ไข URL Proxy (ตัดส่วนท้ายที่พิมพ์ผิดออก)
+      const myProxy = "https://script.google.com/macros/s/AKfycbxlmTz7co1Dgq6WtrJ0zidNQYxDSqrk1pqwU7yh5rOwpKbX7AjfIVD4FNxzca6HMp4Huw/exec";
 
-        // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
-        try {
+      // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
+      try {
           const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
 
-          // แก้ไขบรรทัดนี้: เติม ?url= เข้าไป
+          // เชื่อมต่อด้วย ?url= ให้ถูกต้องเพียงตัวเดียว
           const resSeacon = await fetch(myProxy + "?url=" + encodeURIComponent(urlSeacon));
           const dataSeacon = await resSeacon.json();
 
-          console.log("Thai Gold Data:", dataSeacon); // ดูค่าที่ได้ใน Console
+          console.log("Thai Gold Data:", dataSeacon);
 
           if (dataSeacon) {
+              // ใช้เครื่องหมาย || 0 เพื่อกัน Error ถ้าข้อมูลบางตัวไม่มา
               document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
               document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
               document.getElementById('AskAssociation').innerText = (dataSeacon.AskAssociation || 0).toLocaleString();
               document.getElementById('BidAssociation').innerText = (dataSeacon.BidAssociation || 0).toLocaleString();
               document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "---";
           }
-        } catch (e) {
+      } catch (e) {
           console.error("Thai Gold Error", e);
-        }
+      }
+
+      // --- ส่วนดึง FX (เงินบาท) ---
+      try {
+          const resEx = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+          const dataEx = await resEx.json();
+          document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
+      } catch (e) { console.error("FX Error:", e); }
+
+      // --- 3. ดึง Gold Spot (ราคาโลกจาก KuCoin) ---
+      try {
+          // เรียกผ่าน Proxy เฉยๆ (เพราะเราตั้ง Default ใน Google Script ให้ดึง KuCoin ไว้แล้ว)
+          const resSpot = await fetch(myProxy);
+          const rawData = await resSpot.json();
+
+          console.log("Spot Data from KuCoin:", rawData);
+
+          if (rawData && rawData.data && rawData.data.price) {
+              const price = parseFloat(rawData.data.price);
+              document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+          }
+      } catch (e) {
+          console.error("Spot Error", e);
+          document.getElementById('spot').innerText = "Data Error";
+      }
+  }
 
 
-        try {
-            const resEx = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
-            const dataEx = await resEx.json();
-            document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
-        } catch (e) { console.error("FX Error:", e); }
-
-
-        // --- 3. ดึง Gold Spot (ราคาโลกจาก KuCoin) ---
-        try {
-            // เรียกโดยไม่ส่ง URL เพื่อให้ Script ดึง KuCoin ตามที่เราตั้งไว้
-            const resSpot = await fetch(myProxy);
-            const rawData = await resSpot.json();
-
-            console.log("Spot Data from KuCoin:", rawData);
-
-            if (rawData && rawData.data && rawData.data.price) {
-                const price = parseFloat(rawData.data.price);
-                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
-            }
-        } catch (e) {
-            console.error("Spot Error", e);
-            document.getElementById('spot').innerText = "Data Error";
-        }
-    }
-
-    // เรียกทำงานทันทีที่โหลดหน้า
-    fetchGoldPrice();
-
-    // 1. ตั้งค่าให้รีเฟรชข้อมูลอัตโนมัติทุกๆ 30 วินาที
-    setInterval(fetchGoldPrice, 30000);
-
-    // 2. ฟังก์ชันตกแต่งเพิ่มเติม (ถ้าต้องการให้ราคาขยับแล้วมีสี)
-    // คุณสามารถเพิ่ม Logic ตรวจสอบได้ว่าถ้าราคาใหม่ > ราคาเก่า ให้เป็นสีเขียวชั่วคราวได้ครับ
-
-
-    </script>
-
+</sript>
 
 </body>
 </html>
