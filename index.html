@@ -93,7 +93,7 @@
     <script>
         async function fetchGoldPrice() {
             // 1. URL Proxy (ห้ามลืม /exec ที่ส่วนท้าย)
-            const myProxy = "https://script.google.com/macros/s/AKfycbyY15DBPIOH0aVCQ1k1Cu2jHizC3Gzy9TMIt3Oqi2XK9IdrbvQc5hzNvzCK9tudJr17IA/exec";
+            const myProxy = "https://script.google.com/macros/s/AKfycbzLPw6AdGxLZ-64uO-IDKkd5cX5vtCFGzuKHxQezHoMnz_ZXkpJp2QiAb0xZ3h75UENew/exec";
 
             // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
             try {
@@ -125,28 +125,37 @@
 
             // --- 3. ดึง Gold Spot (ราคาโลกจาก Bitfinex) ---
             try {
-                // ใช้ Symbol tXAU:UST ซึ่งคือ Gold Spot vs US Dollar จริงๆ
-                const urlBitfinex = "https://api-pub.bitfinex.com/v2/ticker/tXAU:UST";
-
-                // ดึงผ่าน Proxy ของคุณเหมือนเดิม
+                // เปลี่ยน Symbol เป็น tXAUUSD เพื่อเลี่ยงปัญหาเครื่องหมาย : ใน URL
+                const urlBitfinex = "https://api-pub.bitfinex.com/v2/ticker/tXAUUSD";
                 const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlBitfinex));
                 const rawData = await resSpot.json();
 
                 console.log("Spot Data (Bitfinex):", rawData);
 
-                // Bitfinex ส่งกลับมาเป็น Array: Index 6 คือราคาล่าสุด (Last Price)
-                if (Array.isArray(rawData) && rawData[6]) {
+                // Bitfinex ส่งกลับมาเป็น Array: Index 6 คือราคาล่าสุด
+                if (Array.isArray(rawData) && rawData.length > 6) {
                     const price = parseFloat(rawData[6]);
-                    document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {
+                    document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
                     console.log("✅ Real Gold Spot Updated:", price);
+                } else {
+                    // แผนสำรอง: ถ้า Bitfinex ยังบ่นเรื่อง Symbol ให้ใช้ PAXG จาก KuCoin แทน (เพื่อไม่ให้หน้าจอว่าง)
+                    console.log("Switching to Fallback (KuCoin)...");
+                    const urlKucoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
+                    const resKC = await fetch(myProxy + "?url=" + encodeURIComponent(urlKucoin));
+                    const dataKC = await resKC.json();
+                    const priceKC = parseFloat(dataKC.data.price);
+                    document.getElementById('spot').innerText = "$" + priceKC.toLocaleString();
                 }
             } catch (e) {
                 console.error("Spot Error:", e);
                 document.getElementById('spot').innerText = "รอข้อมูล...";
-            }        }
+            }
+
+
+        }
 
         // อย่าลืมเรียกฟังก์ชันให้ทำงาน
         fetchGoldPrice();
