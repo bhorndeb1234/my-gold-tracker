@@ -119,27 +119,28 @@
             document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot (ราคาโลก) - จาก CoinGecko ผ่าน Proxy
+        // 3. ดึง Gold Spot (ราคาโลก) - จาก CryptoCompare (เสถียรที่สุดผ่าน Proxy)
         try {
-            const urlCG = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd";
-            const resSpot = await fetch(myProxy + encodeURIComponent(urlCG));
-            const dataCG = await resSpot.json();
+            const urlCC = "https://min-api.cryptocompare.com/data/price?fsym=PAXG&tsyms=USD";
+            const resSpot = await fetch(myProxy + encodeURIComponent(urlCC));
+            const dataCC = await resSpot.json();
 
-            // ตรวจสอบโครงสร้างข้อมูลของ CoinGecko: { "pax-gold": { "usd": 2845.50 } }
-            if (dataCG && dataCG['pax-gold'] && dataCG['pax-gold'].usd) {
-                const price = dataCG['pax-gold'].usd;
+            // ดูข้อมูลดิบใน Console เพื่อความมั่นใจ
+            console.log("Spot Data:", dataCC);
+
+            if (dataCC && dataCC.USD) {
+                const price = dataCC.USD;
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
             } else {
-                document.getElementById('spot').innerText = "Data Error";
+                document.getElementById('spot').innerText = "Format Error";
             }
         } catch (e) {
-            console.error("CoinGecko Error:", e);
+            console.error("Spot Error:", e);
             document.getElementById('spot').innerText = "รอข้อมูล...";
         }
-
     }
 
 
