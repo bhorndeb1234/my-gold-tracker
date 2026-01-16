@@ -128,14 +128,14 @@
 
             if (rawData && rawData.data && rawData.data.price) {
                 const price = parseFloat(rawData.data.price);
-                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {minimumFractionDigits: 2});
             } else {
                 // แผนสำรองสุดท้าย: ถ้า KuCoin พัง ให้ใช้ราคาจาก CoinGecko
                 const urlCG = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd";
                 const resCG = await fetch(myProxy + encodeURIComponent(urlCG));
                 const dataCG = await resCG.json();
                 const priceCG = dataCG['pax-gold'].usd;
-                document.getElementById('spot').innerText = "$" + priceCG.toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('spot').innerText = "$ " + priceCG.toLocaleString(undefined, {minimumFractionDigits: 2});
             }
         } catch (e) {
             console.error("Spot Error:", e);
