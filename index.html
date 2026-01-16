@@ -93,7 +93,7 @@
     <script>
         async function fetchGoldPrice() {
             // 1. URL Proxy (ห้ามลืม /exec ที่ส่วนท้าย)
-            const myProxy = "https://script.google.com/macros/s/AKfycbwBGRaAh62rESAkPskgVTKxFBI-D24AW49hATanMPon4ebwWlAfRmQyqB9I_suSYO_-1w/exec";
+            const myProxy = "https://script.google.com/macros/s/AKfycbyh-5dpqsbBBeV14arf71wOV_DSpDuG8AaV0Lb_vGSQwQK6xK6vimVtm6ZKXWR89wqfGQ/exec";
 
             // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
             try {
@@ -123,26 +123,25 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAUUSD ผ่าน CoinGecko) ---
+            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAUUSD) ---
             try {
-                // ดึงผ่าน Proxy ของคุณ (ซึ่งตอนนี้ชี้ไปที่ CoinGecko โดยตรง)
-                const resSpot = await fetch(myProxy);
-                const dataSpot = await resSpot.json();
+                const resSpot = await fetch(myProxy); // ดึงผ่าน Proxy ของคุณ
+                const rawData = await resSpot.json();
 
-                console.log("Spot Data (CoinGecko):", dataSpot);
+                console.log("Spot Data (Bitfinex Raw):", rawData);
 
-                if (dataSpot && dataSpot['pax-gold'] && dataSpot['pax-gold'].usd) {
-                    const price = parseFloat(dataSpot['pax-gold'].usd);
-
+                // Bitfinex ส่งมาเป็น Array: Index 6 คือราคาล่าสุด
+                if (Array.isArray(rawData) && rawData.length >= 7) {
+                    const price = parseFloat(rawData[6]);
                     document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Spot Gold Updated:", price);
+                    console.log("✅ Spot Gold Updated (Bitfinex):", price);
                 } else {
-                    throw new Error("Data Format Error");
+                    // หากได้ข้อมูลผิดปกติ ให้ลองดึงราคาสัมรอง (PAXG)
+                    throw new Error("Bitfinex Format Error");
                 }
-
             } catch (e) {
                 console.error("Spot Error:", e);
                 document.getElementById('spot').innerText = "รอข้อมูล...";
