@@ -93,7 +93,7 @@
     <script>
         async function fetchGoldPrice() {
             // 1. URL Proxy (ห้ามลืม /exec ที่ส่วนท้าย)
-            const myProxy = "https://script.google.com/macros/s/AKfycbxHLZvKaAMWC9yuo41N0WsonI5GfOkx3pXjjM7Ke4fSuEpCr4S8uTrmLXCeLNurC-MOeQ/exec";
+            const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
 
             // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
             try {
@@ -123,31 +123,30 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAUUSD - แม่นยำเท่า OANDA) ---
+            // --- 3. ดึง Gold Spot (ราคาโลกจาก Google/Coinbase - แม่นยำเท่า OANDA) ---
             try {
-                const resSpot = await fetch(myProxy); // URL ใหม่จากการ Deploy
+                const resSpot = await fetch(myProxy);
                 const rawData = await resSpot.json();
 
-                console.log("Spot Data (Forex Feed):", rawData);
+                console.log("Spot Data (Final Source):", rawData);
 
-                // ในระบบ Forex: 1 XAU (ทอง) จะมีค่าเท่ากับกี่ USD
-                // โครงสร้างคือ rawData.rates.USD
-                if (rawData && rawData.rates && rawData.rates.USD) {
-                    const price = parseFloat(rawData.rates.USD);
+                // รองรับทั้งโครงสร้าง {price: "..."} และ {data: {amount: "..."}}
+                let price = rawData.price || (rawData.data && rawData.data.amount);
 
-                    document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
+                if (price) {
+                    const numericPrice = parseFloat(price);
+                    document.getElementById('spot').innerText = "$" + numericPrice.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Spot Gold Updated (Forex Feed):", price);
+                    console.log("✅ Spot Gold Updated:", numericPrice);
                 } else {
-                    throw new Error("Forex Data Format Error");
+                    throw new Error("Data Format Error");
                 }
             } catch (e) {
                 console.error("Spot Error:", e);
                 document.getElementById('spot').innerText = "รอข้อมูล...";
             }
-
 
         }
 
