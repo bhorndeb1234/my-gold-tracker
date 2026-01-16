@@ -25,6 +25,21 @@
             </div>
         </div>
 
+        <div class="bg-gray-700 rounded-2xl p-4 mb-4 text-center">
+            <p class="text-sm text-gray-400">สมาคม 96.5%</p>
+            <div class="flex justify-around mt-2">
+                <div>
+                    <p class="text-xs text-red-400">ขายออก</p>
+                    <p id="AskAssociation" class="text-2xl font-bold text-red-500">---</p>
+                </div>
+                <div class="border-l border-gray-600"></div>
+                <div>
+                    <p class="text-xs text-green-400">รับซื้อ</p>
+                    <p id="BidAssociation" class="text-2xl font-bold text-green-500">---</p>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-2 gap-4 mb-6">
             <div class="bg-gray-700 rounded-2xl p-3 text-center">
                 <p class="text-xs text-gray-400">Spot Gold ($)</p>
@@ -70,57 +85,45 @@
     </script> -->
 
     <script>
-        async function fetchGoldPrice() {
-            const updateTimeEl = document.getElementById('updateTime');
-            updateTimeEl.innerText = "กำลังดึงข้อมูลจากฮั่วเซ่งเฮง...";
+    async function fetchGoldPrice() {
+        const myProxy = "YOUR_GOOGLE_SCRIPT_URL?url=";
 
-            // เปลี่ยน YOUR_GOOGLE_SCRIPT_URL เป็น URL ของคุณ
-            const myProxy = "https://script.google.com/macros/s/AKfycbypD3WSGeorBl0kCSzd7HHDUd8I2L7phTKfJMqQ4fZhE5_3oZgenG6nulP1tf2XLft_xg/exec?url=";
-            const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
-            const urlPrice = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
+        // API ใหม่สำหรับค่าเงินบาท (ฟรีและไม่ต้องใช้ Key)
+        const urlExchange = "https://api.exchangerate-api.com/v4/latest/USD";
+        // API ของ Binance เพื่อดึงราคา PAXG (เหรียญทองคำที่มีมูลค่าเท่ากับทอง 1 ออนซ์โลก)
+        const urlSpot = "https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT";
 
-            try {
-                // 1. ดึงราคาทองแท่ง 96.5%
-                const resSeacon = await fetch(myProxy + encodeURIComponent(urlSeacon));
-                const dataSeacon = await resSeacon.json();
+        // API เดิมของฮั่วเซ่งเฮง
+        const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
 
-                if (dataSeacon) {
-                    document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
-                    document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
-                    document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "อัปเดตแล้ว";
-                }
-
-                // 2. ดึง Spot & FX (จากชุดข้อมูลที่คุณกางดูใน Console)
-                const resPrice = await fetch(myProxy + encodeURIComponent(urlPrice));
-                const dataPrice = await resPrice.json();
-
-                console.log("ตรวจสอบข้อมูลดิบ:", dataPrice);
-
-                if (dataPrice && dataPrice.length > 0) {
-                    const item = dataPrice[0]; // เลือก GoldType: "HSH"
-
-                    // แปลง String "68,470" ให้เป็นตัวเลขโดยลบคอมมาออกก่อน
-                    const cleanSell = item.Sell ? item.Sell.replace(/,/g, '') : "0";
-                    const cleanBuy = item.Buy ? item.Buy.replace(/,/g, '') : "0";
-
-                    // แสดงผล (ใช้ราคาขายเป็น Spot ชั่วคราว และราคารับซื้อเป็น FX ตามที่ข้อมูลมี)
-                    document.getElementById('spot').innerText = "฿" + Number(cleanSell).toLocaleString();
-                    document.getElementById('fx').innerText = "รับซื้อ: ฿" + Number(cleanBuy).toLocaleString();
-
-                    // เปลี่ยนข้อความกำกับหน้าเว็บให้ตรงกับข้อมูล (ถ้าต้องการ)
-                    // document.getElementById('spot-label').innerText = "ราคาขายออก";
-                }
-
-            } catch (e) {
-                console.error("Gem Debug Error:", e);
-                updateTimeEl.innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณารีเฟรช";
+        try {
+            // 1. ดึงราคาทองไทย (เหมือนเดิม)
+            const resSeacon = await fetch(myProxy + encodeURIComponent(urlSeacon));
+            const dataSeacon = await resSeacon.json();
+            if (dataSeacon) {
+                document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
+                document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
+                document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965;
+                document.getElementById('AskAssociation').innerText = (dataSeacon.AskAssociation || 0).toLocaleString();
+                document.getElementById('BidAssociation').innerText = (dataSeacon.BidAssociation || 0).toLocaleString();
             }
-        }
 
-        // รันทันที
-        fetchGoldPrice();
-        // รีเฟรชอัตโนมัติทุก 1 นาที
-        setInterval(fetchGoldPrice, 60000);
+            // 2. ดึงค่าเงินบาท (USD/THB)
+            const resEx = await fetch(urlExchange); // ตัวนี้ส่วนใหญ่ไม่ติด CORS ดึงตรงได้เลย
+            const dataEx = await resEx.json();
+            const thbRate = dataEx.rates.THB;
+            document.getElementById('fx').innerText = thbRate.toFixed(2) + " THB";
+
+            // 3. ดึง Gold Spot (ราคาโลก)
+            const resSpot = await fetch(myProxy + encodeURIComponent(urlSpot));
+            const dataSpot = await resSpot.json();
+            const spotPrice = parseFloat(dataSpot.price);
+            document.getElementById('spot').innerText = "$" + spotPrice.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+        } catch (e) {
+            console.error("Gem Debug:", e);
+        }
+    }
     </script>
 
 </body>
