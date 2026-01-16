@@ -125,23 +125,43 @@
 
             // --- 3. ดึง Gold Spot (ราคาโลกจริง XAU/USD จาก Yahoo Finance) ---
             try {
-                // เรียก myProxy โดยไม่ส่งพารามิเตอร์ เพื่อให้ Script ไปดึง Yahoo Finance
                 const resSpot = await fetch(myProxy);
                 const dataSpot = await resSpot.json();
 
                 console.log("Spot Data (Yahoo):", dataSpot);
 
-                // แกะโครงสร้าง Yahoo Finance: chart.result[0].meta.regularMarketPrice
-                if (dataSpot && dataSpot.chart && dataSpot.chart.result) {
-                    const price = dataSpot.chart.result[0].meta.regularMarketPrice;
+                let price = null;
 
+                // ตรวจสอบโครงสร้างข้อมูล Yahoo (ลองแกะ 2 ทางเพื่อให้ชัวร์)
+                if (dataSpot && dataSpot.chart && dataSpot.chart.result && dataSpot.chart.result[0]) {
+                    const result = dataSpot.chart.result[0];
+
+                    // ทางที่ 1: ดึงจาก meta
+                    price = result.meta.regularMarketPrice;
+
+                    // ทางที่ 2: ถ้า meta ไม่มี ให้ดึงจากราคาสุดท้ายใน indicators (แม่นยำกว่า)
+                    if (!price && result.indicators && result.indicators.quote && result.indicators.quote[0].close) {
+                        const prices = result.indicators.quote[0].close;
+                        price = prices[prices.length - 1]; // เอาค่าล่าสุด
+                    }
+                }
+
+                if (price && !isNaN(price)) {
                     document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Real-time Spot Gold (Yahoo):", price);
+                    console.log("✅ Spot Gold Updated (Yahoo):", price);
                 } else {
-                    throw new Error("Yahoo Format Error");
+                    // แผนสำรอง: ถ้า Yahoo พลัง ให้ใช้ของ Bitfinex (tXAUUSD)
+                    console.warn("Yahoo format issue, trying Bitfinex fallback...");
+                    const resBF = await fetch(myProxy + "?url=" + encodeURIComponent("https://api-pub.bitfinex.com/v2/ticker/tXAUUSD"));
+                    const dataBF = await resBF.json();
+                    if (Array.isArray(dataBF) && dataBF[6]) {
+                        document.getElementById('spot').innerText = "$" + dataBF[6].toLocaleString();
+                    } else {
+                        throw new Error("All Spot Sources Failed");
+                    }
                 }
 
             } catch (e) {
