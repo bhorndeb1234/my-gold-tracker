@@ -113,26 +113,34 @@
             document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot (ราคาโลก) - ระบบ 2 ชั้น
+        // 3. ดึง Gold Spot (ราคาโลก) - ใช้ Bitfinex API
         try {
-            // ลองดึงจาก CoinCap ก่อน
-            const resSpot = await fetch("https://api.coincap.io/v2/assets/pax-gold");
+            // ดึงราคา PAXG/USDT จาก Bitfinex (มักจะไม่โดนบล็อก DNS)
+            const resSpot = await fetch("https://api-pub.bitfinex.com/v2/ticker/tPAX:UST");
             const dataSpot = await resSpot.json();
-            const price = parseFloat(dataSpot.data.priceUsd);
-            document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            // โครงสร้างข้อมูล Bitfinex: [BID, BID_SIZE, ASK, ASK_SIZE, ...]
+            // เราจะใช้ค่า BID (ตัวแรก Index 0) หรือ LAST_PRICE (Index 6)
+            if (Array.isArray(dataSpot)) {
+                const price = dataSpot[6]; // Last Price
+                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+            } else {
+                throw new Error("Invalid Data Format");
+            }
         } catch (e) {
-            console.warn("CoinCap failed, trying backup...");
+            console.warn("Bitfinex failed, trying backup (KuCoin)...");
             try {
-                // ถ้า CoinCap พัง ให้สลับมาดึงจาก Messari (ตัวสำรองที่เสถียรมาก)
-                const resBackup = await fetch("https://data.messari.io/api/v1/assets/paxg/metrics");
-                const dataBackup = await resBackup.json();
-                const priceBackup = dataBackup.data.market_data.price_usd;
-                document.getElementById('spot').innerText = "$" + priceBackup.toLocaleString(undefined, {minimumFractionDigits: 2});
+                // สำรองตัวที่ 2: KuCoin
+                const resKu = await fetch("https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT");
+                const dataKu = await resKu.json();
+                const priceKu = parseFloat(dataKu.data.price);
+                document.getElementById('spot').innerText = "$" + priceKu.toLocaleString(undefined, {minimumFractionDigits: 2});
             } catch (err) {
                 console.error("All Spot APIs failed:", err);
-                document.getElementById('spot').innerText = "Connecting...";
+                document.getElementById('spot').innerText = "หาข้อมูลไม่พบ";
             }
         }
+
     }
 
     // เรียกทำงานทันทีที่โหลดหน้า
