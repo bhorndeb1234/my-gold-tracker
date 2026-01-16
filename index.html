@@ -95,7 +95,7 @@
         const updateTimeEl = document.getElementById('updateTime');
         updateTimeEl.innerText = "กำลังอัปเดต...";
 
-        const myProxy = "https://script.google.com/macros/s/AKfycbwdfLCrh0bCk-sNQNPnhDUUoXhzmPf9gS_qvK4CC0--q3ueTnxrZ5TH13UvZqCDvhIwFw/exec?url=";
+        const myProxy = "https://script.google.com/macros/s/AKfycbyaK4fezoovJBZqjn1J1zbgjdxS7IYkcWS-13dfCg2NaI9RoBYxO8P-JlMs5c52s0TW/exec?url=";
 
         // 1. ดึงราคาทองไทย (ผ่าน Proxy)
         try {
@@ -119,31 +119,31 @@
             document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot (ราคาโลก) - ดึงผ่าน Google Proxy ของเราเอง
+        // 3. ดึง Gold Spot (ราคาโลก) - ดึงผ่าน Google Proxy (Binance Source)
         try {
-            // ใช้ตัวแปร myProxy เดิมที่คุณมี (ที่ชี้ไปที่ Google Script)
+            // ใช้ตัวแปร myProxy ของคุณ (เช่น https://script.google.com/macros/s/XXXX/exec)
             const resSpot = await fetch(myProxy);
             const dataSpot = await resSpot.json();
 
-            // โครงสร้างข้อมูล Bitfinex คือ Array: [BID, BID_SIZE, ASK, ASK_SIZE, ..., LAST_PRICE, ...]
-            // LAST_PRICE จะอยู่ที่ Index 6
-            if (Array.isArray(dataSpot) && dataSpot[6]) {
-                const price = parseFloat(dataSpot[6]);
+            console.log("Spot Data from Google:", dataSpot);
+
+            // Binance จะส่งมาเป็น { "symbol": "PAXGUSDT", "price": "2750.50" }
+            if (dataSpot && dataSpot.price) {
+                const price = parseFloat(dataSpot.price);
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
-                console.log("✅ Spot Gold Updated via Bitfinex:", price);
+                console.log("✅ Spot Gold Updated:", price);
             } else {
-                console.error("Format Error from Script:", dataSpot);
-                document.getElementById('spot').innerText = "Format Error";
+                console.error("Format Error:", dataSpot);
+                document.getElementById('spot').innerText = "Data Error";
             }
         } catch (e) {
             console.error("Spot Fetch Error:", e);
             document.getElementById('spot').innerText = "เชื่อมต่อไม่ได้";
         }
 
-        
     }
 
 
