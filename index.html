@@ -93,9 +93,17 @@
                 const resPrice = await fetch(myProxy + encodeURIComponent(urlPrice));
                 const dataPrice = await resPrice.json();
 
+                console.log("Spot Data Check:", dataPrice); // Gem เพิ่มบรรทัดนี้เพื่อดูค่าจริงใน Console
+
                 if (dataPrice && dataPrice.length > 0) {
-                    document.getElementById('spot').innerText = "$" + (dataPrice[0].Bid || 0).toLocaleString();
-                    document.getElementById('fx').innerText = (dataPrice[0].FxBid || 0).toLocaleString();
+                    const item = dataPrice[0];
+
+                    // ลองเช็กตัวแปรทั้งตัวพิมพ์เล็กและตัวพิมพ์ใหญ่ (บางครั้ง API เปลี่ยนไปมา)
+                    const spotVal = item.Bid || item.bid || item.Ask || item.ask || 0;
+                    const fxVal = item.FxBid || item.fxBid || item.FxAsk || item.fxAsk || 0;
+
+                    document.getElementById('spot').innerText = "$" + Number(spotVal).toLocaleString();
+                    document.getElementById('fx').innerText = Number(fxVal).toLocaleString() + " THB";
                 }
             } catch (e) {
                 console.error("Gem Debug:", e);
