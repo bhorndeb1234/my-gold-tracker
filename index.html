@@ -92,22 +92,29 @@
 
     <script>
     async function fetchGoldPrice() {
-        const myProxy = "https://script.google.com/macros/s/AKfycbyX3uyAGvHk90DfgMgcHkzrL7x97VXBaQcg0ARq-XOY19ubf234UBiWadTJSk31-x7KGA/exec?utl=";
+        const myProxy = "https://script.google.com/macros/s/AKfycbxlmTz7co1Dgq6WtrJ0zidNQYxDSqrk1pqwU7yh5rOwpKbX7AjfIVD4FNxzca6HMp4Huw/exec?utl=";
 
         // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
         try {
           const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
-          const resSeacon = await fetch(myProxy + encodeURIComponent(urlSeacon));
+
+          // แก้ไขบรรทัดนี้: เติม ?url= เข้าไป
+          const resSeacon = await fetch(myProxy + "?url=" + encodeURIComponent(urlSeacon));
           const dataSeacon = await resSeacon.json();
+
+          console.log("Thai Gold Data:", dataSeacon); // ดูค่าที่ได้ใน Console
 
           if (dataSeacon) {
               document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
               document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
               document.getElementById('AskAssociation').innerText = (dataSeacon.AskAssociation || 0).toLocaleString();
               document.getElementById('BidAssociation').innerText = (dataSeacon.BidAssociation || 0).toLocaleString();
-              document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965;
+              document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "---";
           }
-        } catch (e) { console.error("Thai Gold Error", e); }
+        } catch (e) {
+          console.error("Thai Gold Error", e);
+        }
+
 
         try {
             const resEx = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
