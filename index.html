@@ -95,7 +95,7 @@
         const updateTimeEl = document.getElementById('updateTime');
         updateTimeEl.innerText = "กำลังอัปเดต...";
 
-        const myProxy = "https://script.google.com/macros/s/AKfycbxZyaUpH_aTrIVviZiEOxw8vjkifCfTR09QkRGTmWjZ_4ti83Ak0wxaxvTocS3RIrZb2A/exec?url=";
+        const myProxy = "https://script.google.com/macros/s/AKfycbwdfLCrh0bCk-sNQNPnhDUUoXhzmPf9gS_qvK4CC0--q3ueTnxrZ5TH13UvZqCDvhIwFw/exec?url=";
 
         // 1. ดึงราคาทองไทย (ผ่าน Proxy)
         try {
@@ -119,38 +119,31 @@
             document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot (ราคาโลก) - ใช้ AllOrigins + Binance
+        // 3. ดึง Gold Spot (ราคาโลก) - ดึงผ่าน Google Proxy ของเราเอง
         try {
-            const targetUrl = "https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT";
-            // ใช้ proxy กลางชื่อ allorigins.win เพื่อดึงข้อมูล
-            const resSpot = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
-            const data = await resSpot.json();
+            // ใช้ตัวแปร myProxy เดิมที่คุณมี (ที่ชี้ไปที่ Google Script)
+            const resSpot = await fetch(myProxy);
+            const dataSpot = await resSpot.json();
 
-            // allorigins จะส่งข้อมูลกลับมาในรูปแบบ { contents: "{...}" }
-            const binanceData = JSON.parse(data.contents);
-
-            if (binanceData && binanceData.price) {
-                const price = parseFloat(binanceData.price);
+            // โครงสร้างข้อมูล Bitfinex คือ Array: [BID, BID_SIZE, ASK, ASK_SIZE, ..., LAST_PRICE, ...]
+            // LAST_PRICE จะอยู่ที่ Index 6
+            if (Array.isArray(dataSpot) && dataSpot[6]) {
+                const price = parseFloat(dataSpot[6]);
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
-                console.log("✅ Spot Gold Updated:", price);
+                console.log("✅ Spot Gold Updated via Bitfinex:", price);
             } else {
-                throw new Error("Invalid Format");
+                console.error("Format Error from Script:", dataSpot);
+                document.getElementById('spot').innerText = "Format Error";
             }
         } catch (e) {
-            console.error("Spot Error:", e);
-            // แผนสำรองสุดท้าย: ดึงราคาจาก Bitfinex แบบ Direct (บางเครือข่ายยอมให้ดึงตรง)
-            try {
-                const resDirect = await fetch("https://api-pub.bitfinex.com/v2/ticker/tPAX:UST");
-                const directData = await resDirect.json();
-                document.getElementById('spot').innerText = "$" + directData[6].toLocaleString();
-            } catch(err) {
-                document.getElementById('spot').innerText = "เชื่อมต่อไม่ได้";
-            }
+            console.error("Spot Fetch Error:", e);
+            document.getElementById('spot').innerText = "เชื่อมต่อไม่ได้";
         }
 
+        
     }
 
 
