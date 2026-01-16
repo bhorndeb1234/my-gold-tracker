@@ -89,21 +89,23 @@
                 document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
                 document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "อัปเดตแล้ว";
 
-                // ดึง Spot & FX
-                const resPrice = await fetch(myProxy + encodeURIComponent(urlPrice));
-                const dataPrice = await resPrice.json();
-
-                console.log("Spot Data Check:", dataPrice); // Gem เพิ่มบรรทัดนี้เพื่อดูค่าจริงใน Console
-
+                // แสดงผล Spot & FX (ปรับตามข้อมูลที่คุณกางออกมา)
                 if (dataPrice && dataPrice.length > 0) {
-                    const item = dataPrice[0];
+                    const item = dataPrice[0]; // ใช้ชุดข้อมูลแรก (HSH)
 
-                    // ลองเช็กตัวแปรทั้งตัวพิมพ์เล็กและตัวพิมพ์ใหญ่ (บางครั้ง API เปลี่ยนไปมา)
-                    const spotVal = item.Bid || item.bid || item.Ask || item.ask || 0;
-                    const fxVal = item.FxBid || item.fxBid || item.FxAsk || item.fxAsk || 0;
+                    // เนื่องจาก Bid/FxBid เป็น null เราจะใช้ Sell และข้อมูลอื่นมาโชว์แทนชั่วคราว
+                    // และต้องลบคอมมาออกก่อนแปลงเป็นตัวเลข
+                    const sellPrice = item.Sell ? item.Sell.replace(/,/g, '') : "0";
+                    const buyPrice = item.Buy ? item.Buy.replace(/,/g, '') : "0";
 
-                    document.getElementById('spot').innerText = "$" + Number(spotVal).toLocaleString();
-                    document.getElementById('fx').innerText = Number(fxVal).toLocaleString() + " THB";
+                    // แสดงราคาขาย (Sell) แทน Spot ไปก่อนเพื่อให้เห็นตัวเลข
+                    document.getElementById('spot').innerText = "฿" + Number(sellPrice).toLocaleString();
+
+                    // แสดงราคารับซื้อ (Buy) แทน FX ไปก่อน
+                    document.getElementById('fx').innerText = "รับซื้อ: ฿" + Number(buyPrice).toLocaleString();
+
+                    // เปลี่ยนหัวข้อบนหน้าเว็บให้ตรงกับข้อมูลจริง (ถ้าต้องการ)
+                    // document.querySelector("p:contains('Spot Gold')").innerText = "ราคาขาย (Sell)";
                 }
             } catch (e) {
                 console.error("Gem Debug:", e);
