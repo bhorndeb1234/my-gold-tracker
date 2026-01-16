@@ -100,11 +100,21 @@
             const resThai = await fetch(myProxy + "?url=" + encodeURIComponent(urlHSH));
             const dataThai = await resThai.json();
 
-            // ใส่ Logic การแสดงราคาไทยที่คุณมีอยู่เดิม (bid965, ask965, etc.)
-            // เช่น: document.getElementById('bid965').innerText = dataThai[0].Bid;
-            // (ก๊อปปี้ส่วนแสดงผลเดิมมาใส่ตรงนี้ครับ)
-            console.log("Thai Gold Updated");
+            if (dataSeacon) {
+                document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
+                document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
+                document.getElementById('AskAssociation').innerText = (dataSeacon.AskAssociation || 0).toLocaleString();
+                document.getElementById('BidAssociation').innerText = (dataSeacon.BidAssociation || 0).toLocaleString();
+                document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965;
+            }
         } catch (e) { console.error("Thai Gold Error", e); }
+
+        try {
+            const resEx = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+            const dataEx = await resEx.json();
+            document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
+        } catch (e) { console.error("FX Error:", e); }
+
 
         // --- 3. ดึง Gold Spot (ราคาโลกจาก KuCoin) ---
         try {
