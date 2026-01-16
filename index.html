@@ -93,7 +93,7 @@
     <script>
         async function fetchGoldPrice() {
             // 1. URL Proxy (ห้ามลืม /exec ที่ส่วนท้าย)
-            const myProxy = "https://script.google.com/macros/s/AKfycbwb_jVruI7zxz4GgXDI2pemeh2G0hCPlwPvhER8jpMsXr1L2WHkjtH52h-9GgQENz27NQ/exec";
+            const myProxy = "https://script.google.com/macros/s/AKfycbxwuf7xwh9VmlbC_Ul8kfiyqiGGG84jVqmNFw4irl8xrxGIZDnD7AmsveoAEffX_pzvAA/exec";
 
             // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
             try {
@@ -123,24 +123,24 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจริง) ---
+            // --- 3. ดึง Gold Spot (ราคาโลกจาก Bitfinex - แม่นยำเท่า OANDA) ---
             try {
-                const resSpot = await fetch(myProxy); // URL จาก Google Script ตัวใหม่
+                const resSpot = await fetch(myProxy); // URL ใหม่จากการ Deploy
                 const rawData = await resSpot.json();
 
-                console.log("Spot Data (Binance Raw):", rawData);
+                console.log("Spot Data (Bitfinex):", rawData);
 
-                // โครงสร้าง Binance ง่ายมาก: { "symbol": "PAXGUSDT", "price": "2750.50" }
-                if (rawData && rawData.price) {
-                    const price = parseFloat(rawData.price);
+                // Bitfinex จะส่ง Array กลับมา โดย Index 6 คือราคาล่าสุด
+                if (Array.isArray(rawData) && rawData.length > 6) {
+                    const price = parseFloat(rawData[6]);
 
                     document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Spot Gold Updated (Binance):", price);
+                    console.log("✅ Spot Gold Updated (Bitfinex):", price);
                 } else {
-                    throw new Error("Binance Format Error");
+                    throw new Error("Bitfinex Data Format Error");
                 }
             } catch (e) {
                 console.error("Spot Error:", e);
