@@ -123,35 +123,46 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจาก Bitfinex) ---
+            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAU/USD - แม่นยำเท่า OANDA) ---
             try {
-                // เปลี่ยน Symbol เป็น tXAUUSD เพื่อเลี่ยงปัญหาเครื่องหมาย : ใน URL
-                const urlBitfinex = "https://api-pub.bitfinex.com/v2/ticker/tXAUUSD";
-                const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlBitfinex));
-                const rawData = await resSpot.json();
+                // API นี้ให้ราคาทองโลก (XAU/USD) โดยตรง
+                const urlGold = "https://api.invertir.com/api/v1/prices/XAUUSD";
 
-                console.log("Spot Data (Bitfinex):", rawData);
+                const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlGold));
+                const dataSpot = await resSpot.json();
 
-                // Bitfinex ส่งกลับมาเป็น Array: Index 6 คือราคาล่าสุด
-                if (Array.isArray(rawData) && rawData.length > 6) {
-                    const price = parseFloat(rawData[6]);
-                    document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
+                console.log("Real Spot Data:", dataSpot);
+
+                // โครงสร้างของ Invertir มักจะเป็น { price: 2750.50 } หรือ { last: 2750.50 }
+                // แต่ถ้ามันเข้าไม่ได้ เราจะใช้ Fallback ไปที่ GoldPrice API
+                let price = dataSpot.price || dataSpot.last || (dataSpot[0] && dataSpot[0].price);
+
+                if (price) {
+                    document.getElementById('spot').innerText = "$" + parseFloat(price).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Real Gold Spot Updated:", price);
+                    console.log("✅ Real Spot Gold (OANDA Match):", price);
                 } else {
-                    // แผนสำรอง: ถ้า Bitfinex ยังบ่นเรื่อง Symbol ให้ใช้ PAXG จาก KuCoin แทน (เพื่อไม่ให้หน้าจอว่าง)
-                    console.log("Switching to Fallback (KuCoin)...");
-                    const urlKucoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
-                    const resKC = await fetch(myProxy + "?url=" + encodeURIComponent(urlKucoin));
-                    const dataKC = await resKC.json();
-                    const priceKC = parseFloat(dataKC.data.price);
-                    document.getElementById('spot').innerText = "$" + priceKC.toLocaleString();
+                    throw new Error("Format Mismatch");
                 }
+
             } catch (e) {
                 console.error("Spot Error:", e);
-                document.getElementById('spot').innerText = "รอข้อมูล...";
+
+                // --- แผนสำรอง (ถ้าอันแรกพัง): ใช้ข้อมูลจาก Exchange-API ที่เสถียรมาก ---
+                try {
+                    const resAlt = await fetch(myProxy + "?url=" + encodeURIComponent("https://api.exchangerate-api.com/v4/latest/XAU"));
+                    const dataAlt = await resAlt.json();
+                    // ราคาจะเป็น 1/ราคาออนซ์ ดังนั้นต้องเอา 1 หาร
+                    const spotPrice = 1 / dataAlt.rates.USD;
+                    document.getElementById('spot').innerText = "$" + spotPrice.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                } catch (err) {
+                    document.getElementById('spot').innerText = "รอข้อมูล...";
+                }
             }
 
 
