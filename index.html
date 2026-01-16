@@ -148,17 +148,17 @@
                 document.getElementById('spot').innerText = "รอข้อมูล...";
             }
 
-        }
+            let oldSpotPrice = 0;
 
-        let oldSpotPrice = 0;
+            // ... (ในฟังก์ชัน fetchGoldPrice) ...
+            if (numericPrice > oldSpotPrice) {
+                document.getElementById('spot').style.color = "#00ff00"; // เขียว
+            } else if (numericPrice < oldSpotPrice) {
+                document.getElementById('spot').style.color = "#ff0000"; // แดง
+            }
+            oldSpotPrice = numericPrice;
 
-        // ... (ในฟังก์ชัน fetchGoldPrice) ...
-        if (numericPrice > oldSpotPrice) {
-            document.getElementById('spot').style.color = "#00ff00"; // เขียว
-        } else if (numericPrice < oldSpotPrice) {
-            document.getElementById('spot').style.color = "#ff0000"; // แดง
         }
-        oldSpotPrice = numericPrice;
 
         // อย่าลืมเรียกฟังก์ชันให้ทำงาน
         fetchGoldPrice();
