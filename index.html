@@ -119,45 +119,37 @@
             document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot (ราคาโลก) - CryptoCompare Debug Version
+        // 3. ดึง Gold Spot (ราคาโลก) - ใช้ AllOrigins + Binance
         try {
-            const urlCC = "https://min-api.cryptocompare.com/data/price?fsym=PAXG&tsyms=USD";
-            const resSpot = await fetch(myProxy + encodeURIComponent(urlCC));
+            const targetUrl = "https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT";
+            // ใช้ proxy กลางชื่อ allorigins.win เพื่อดึงข้อมูล
+            const resSpot = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+            const data = await resSpot.json();
 
-            // รับค่าเป็น Text ก่อนเพื่อป้องกันกรณี JSON พัง
-            const rawText = await resSpot.text();
-            console.log("Raw Response Text:", rawText);
+            // allorigins จะส่งข้อมูลกลับมาในรูปแบบ { contents: "{...}" }
+            const binanceData = JSON.parse(data.contents);
 
-            const dataCC = JSON.parse(rawText);
-            console.log("Parsed Data:", dataCC);
-
-            let price = null;
-
-            // ตรวจสอบรูปแบบข้อมูลที่อาจเกิดขึ้นได้
-            if (dataCC.USD) {
-                price = dataCC.USD; // รูปแบบปกติ { "USD": 2750.50 }
-            } else if (dataCC.contents) {
-                // กรณีโดนห่อใน contents
-                const inner = JSON.parse(dataCC.contents);
-                price = inner.USD;
-            } else if (typeof dataCC === 'number') {
-                price = dataCC;
-            }
-
-            if (price) {
+            if (binanceData && binanceData.price) {
+                const price = parseFloat(binanceData.price);
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
+                console.log("✅ Spot Gold Updated:", price);
             } else {
-                document.getElementById('spot').innerText = "Format Error";
-                console.error("Unknown Format. Data received:", dataCC);
+                throw new Error("Invalid Format");
             }
         } catch (e) {
-            console.error("Detailed Spot Error:", e);
-            document.getElementById('spot').innerText = "รอข้อมูล...";
+            console.error("Spot Error:", e);
+            // แผนสำรองสุดท้าย: ดึงราคาจาก Bitfinex แบบ Direct (บางเครือข่ายยอมให้ดึงตรง)
+            try {
+                const resDirect = await fetch("https://api-pub.bitfinex.com/v2/ticker/tPAX:UST");
+                const directData = await resDirect.json();
+                document.getElementById('spot').innerText = "$" + directData[6].toLocaleString();
+            } catch(err) {
+                document.getElementById('spot').innerText = "เชื่อมต่อไม่ได้";
+            }
         }
-
 
     }
 
