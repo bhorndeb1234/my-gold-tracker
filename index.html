@@ -93,7 +93,7 @@
     <script>
         async function fetchGoldPrice() {
             // 1. URL Proxy (ห้ามลืม /exec ที่ส่วนท้าย)
-            const myProxy = "https://script.google.com/macros/s/AKfycbzLPw6AdGxLZ-64uO-IDKkd5cX5vtCFGzuKHxQezHoMnz_ZXkpJp2QiAb0xZ3h75UENew/exec";
+            const myProxy = "https://script.google.com/macros/s/AKfycbytf-a93_6K3WX5S_Uoo9cmWgiOzoXGEvUn39J9ZuFH7rj4XO70DHXk9eSRD-5xQkzlTw/exec";
 
             // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
             try {
@@ -123,41 +123,30 @@
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลก - แม่นยำใกล้เคียง OANDA) ---
+            // --- 3. ดึง Gold Spot (ราคาโลกจริง XAU/USD จาก Yahoo Finance) ---
             try {
-                // ใช้ AllOrigins Proxy เพื่อดึงข้อมูลจาก Binance โดยตรง
-                const targetUrl = "https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT";
-                const resSpot = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+                // เรียก myProxy โดยไม่ส่งพารามิเตอร์ เพื่อให้ Script ไปดึง Yahoo Finance
+                const resSpot = await fetch(myProxy);
                 const dataSpot = await resSpot.json();
 
-                // AllOrigins จะห่อข้อมูลไว้ใน dataSpot.contents
-                const binanceData = JSON.parse(dataSpot.contents);
+                console.log("Spot Data (Yahoo):", dataSpot);
 
-                if (binanceData && binanceData.price) {
-                    const price = parseFloat(binanceData.price);
+                // แกะโครงสร้าง Yahoo Finance: chart.result[0].meta.regularMarketPrice
+                if (dataSpot && dataSpot.chart && dataSpot.chart.result) {
+                    const price = dataSpot.chart.result[0].meta.regularMarketPrice;
+
                     document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Spot Gold Updated (Binance via AllOrigins):", price);
+                    console.log("✅ Real-time Spot Gold (Yahoo):", price);
                 } else {
-                    throw new Error("AllOrigins/Binance Mismatch");
+                    throw new Error("Yahoo Format Error");
                 }
 
             } catch (e) {
                 console.error("Spot Error:", e);
-
-                // แผนสำรองสุดท้าย: ดึงราคาจาก Bitfinex ผ่าน Google Proxy ของคุณ
-                try {
-                    const urlBF = "https://api-pub.bitfinex.com/v2/ticker/tXAUUSD";
-                    const resBF = await fetch(myProxy + "?url=" + encodeURIComponent(urlBF));
-                    const dataBF = await resBF.json();
-                    if (Array.isArray(dataBF) && dataBF[6]) {
-                        document.getElementById('spot').innerText = "$" + dataBF[6].toLocaleString();
-                    }
-                } catch (err) {
-                    document.getElementById('spot').innerText = "รอข้อมูล...";
-                }
+                document.getElementById('spot').innerText = "รอข้อมูล...";
             }
 
 
