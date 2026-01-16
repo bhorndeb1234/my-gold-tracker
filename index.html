@@ -96,15 +96,15 @@
 
         // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
         try {
-            const urlHSH = "https://apicheckpricev3.huasengheng.com/api/values/getallnew";
+            const urlHSH = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
             const resThai = await fetch(myProxy + "?url=" + encodeURIComponent(urlHSH));
             const dataThai = await resThai.json();
 
-            if (dataSeacon) {
-                document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
-                document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
-                document.getElementById('AskAssociation').innerText = (dataSeacon.AskAssociation || 0).toLocaleString();
-                document.getElementById('BidAssociation').innerText = (dataSeacon.BidAssociation || 0).toLocaleString();
+            if (dataThai) {
+                document.getElementById('ask965').innerText = (dataThai.Ask965 || 0).toLocaleString();
+                document.getElementById('bid965').innerText = (dataThai.Bid965 || 0).toLocaleString();
+                document.getElementById('AskAssociation').innerText = (dataThai.AskAssociation || 0).toLocaleString();
+                document.getElementById('BidAssociation').innerText = (dataThai.BidAssociation || 0).toLocaleString();
                 document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965;
             }
         } catch (e) { console.error("Thai Gold Error", e); }
