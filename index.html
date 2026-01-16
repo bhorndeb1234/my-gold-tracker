@@ -114,6 +114,7 @@
         } catch (e) { console.error("FX Error:", e); }
 
         // 3. ดึง Gold Spot (ราคาโลก) - เปลี่ยนไปใช้ KuCoin แทน Binance
+/*
         try {
             // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
             const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
@@ -137,7 +138,7 @@
             console.error("Spot Error:", e);
             document.getElementById('spot').innerText = "รอข้อมูล...";
         }
-
+*/
 
     }
 
@@ -153,7 +154,7 @@
 
     // ฟังก์ชันทดสอบดึง Spot Gold จาก Binance ผ่าน Proxy
     async function testBinanceProxy() {
-        const myProxy = "URL_GOOGLE_SCRIPT_ใหม่ของคุณ"; // ใส่ URL ที่ได้จากขั้นตอนที่ 1
+        const myProxy = "https://script.google.com/macros/s/AKfycbz1LLP-_wdzY01sFLkxpam03jAb5aQcu-jwRP2k2k7p6YTE7QPgzfiAmqvG-6LZS4dx_w/exec?url="; // ใส่ URL ที่ได้จากขั้นตอนที่ 1
         const binanceUrl = "https://api.binance.com/api/3/ticker/price?symbol=PAXGUSDT";
 
         try {
