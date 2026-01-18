@@ -126,8 +126,17 @@
                 y: { beginAtZero: false, grid: { color: '#333' } },
                 x: { grid: { color: '#333' } }
             },
+            layout: {
+                padding: {
+                    top: 0,    // ลดช่องว่างด้านบน
+                    bottom: 0
+                }
+            },
             plugins: {
-                legend: { labels: { color: '#fff' } }
+                legend: {
+                    display: true, // หรือเปลี่ยนเป็น false ถ้าไม่อยากให้มีชื่อ Dataset ด้านบน
+                    labels: { color: '#fff', boxWidth: 12 }
+                }
             }
         }
     });
