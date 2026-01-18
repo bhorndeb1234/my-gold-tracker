@@ -135,7 +135,7 @@
     async function updateGoldPriceAndChart(spot, fx) {
         // สูตร: ((Spot + Premium 1.5) * 32.48 * FX) / 65.6
         const premium = 1.5;
-        const thaiPrice = ((spot + premium) * 32.48 * fx) / 65.6;
+        const thaiPrice = ((spot + premium) * 0.473 * fx);
 
         // แสดงผลตัวเลขคำนวณ
         // document.getElementById('thaiCalc').innerText = Math.round(thaiPrice).toLocaleString() + " บาท";
