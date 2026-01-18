@@ -57,6 +57,7 @@
             </div>
         </div>
 
+        <div id="thaiCalc"></div>
         <div style="width: 95%; max-width: 800px; margin: 20px auto; background: #1e1e1e; padding: 15px; border-radius: 10px;">
             <canvas id="goldChart"></canvas>
         </div>
@@ -138,7 +139,7 @@
         const thaiPrice = ((spot + premium) * 0.473 * fx);
 
         // แสดงผลตัวเลขคำนวณ
-        // document.getElementById('thaiCalc').innerText = Math.round(thaiPrice).toLocaleString() + " บาท";
+        document.getElementById('thaiCalc').innerText = Math.round(thaiPrice).toLocaleString() + " บาท";
 
         // อัปเดตกราฟ
         const now = new Date();
