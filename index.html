@@ -96,11 +96,13 @@
         fetchGoldPrice();
     </script> -->
 
-    <script>
+  <script>
     // --- 1. ตั้งค่าเริ่มต้นกราฟ ---
     let goldLabels = []; // เก็บเวลา
     let goldData = [];   // เก็บราคาทองคำนวณได้
     let myChart;
+    let oldSpotPrice = 0;
+    let fxRate = 0; // สร้างตัวแปรรอไว้ด้านนอก try หรือข้างบนสุดของฟังก์ชันก็ได้
 
     const ctx = document.getElementById('goldChart').getContext('2d');
     myChart = new Chart(ctx, {
@@ -154,19 +156,14 @@
         myChart.update(); // สั่งให้กราฟวาดใหม่
     }
 
-        async function fetchGoldPrice() {
-            // 1. URL Proxy (ห้ามลืม /exec ที่ส่วนท้าย)
+    async function fetchGoldPrice() {
             const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
 
-            // --- 1 & 2. ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
+            // --- 1 & 2. ดึงราคาไทย ---
             try {
                 const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
-
-                // ต้องประกอบร่าง: Proxy + ?url= + เป้าหมาย
                 const resSeacon = await fetch(myProxy + "?url=" + encodeURIComponent(urlSeacon));
                 const dataSeacon = await resSeacon.json();
-
-                console.log("Thai Gold Data:", dataSeacon);
 
                 if (dataSeacon) {
                     document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
@@ -175,30 +172,20 @@
                     document.getElementById('BidAssociation').innerText = (dataSeacon.BidAssociation || 0).toLocaleString();
                     document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "---";
                 }
-            } catch (e) {
-                console.error("Thai Gold Error", e);
-            }
+            } catch (e) { console.error("Thai Gold Error", e); }
 
             // --- ส่วนดึง FX (เงินบาท) ---
-            let fxRate = 0; // สร้างตัวแปรรอไว้ด้านนอก try หรือข้างบนสุดของฟังก์ชันก็ได้
             try {
                 const resEx = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
                 const dataEx = await resEx.json();
-                // 1. เก็บค่าที่เป็นตัวเลขไว้ในตัวแปร fxRate เพื่อเอาไปคำนวณ
                 fxRate = parseFloat(dataEx.rates.THB);
-
-                // 2. แสดงผลบนหน้าเว็บตามเดิม (แบบ String)
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
-            // --- 3. ดึง Gold Spot (ราคาโลกจาก Google/Coinbase - แม่นยำเท่า OANDA) ---
+            // --- 3. ดึง Gold Spot ---
             try {
                 const resSpot = await fetch(myProxy);
                 const rawData = await resSpot.json();
-
-                console.log("Spot Data (Final Source):", rawData);
-
-                // รองรับทั้งโครงสร้าง {price: "..."} และ {data: {amount: "..."}}
                 let price = rawData.price || (rawData.data && rawData.data.amount);
 
                 if (price) {
@@ -207,7 +194,21 @@
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
-                    console.log("✅ Spot Gold Updated:", numericPrice);
+
+                    // --- ส่วนคำนวณสีและกราฟ (อยู่ในที่ที่ปลอดภัยแล้ว) ---
+                    if (oldSpotPrice > 0) { // ป้องกันการขึ้นสีแดง/เขียวในครั้งแรกที่โหลด
+                        if (numericPrice > oldSpotPrice) {
+                            document.getElementById('spot').style.color = "#00ff00";
+                        } else if (numericPrice < oldSpotPrice) {
+                            document.getElementById('spot').style.color = "#ff0000";
+                        }
+                    }
+                    oldSpotPrice = numericPrice;
+
+                    if (fxRate > 0) {
+                        updateGoldPriceAndChart(numericPrice, fxRate);
+                    }
+
                 } else {
                     throw new Error("Data Format Error");
                 }
@@ -215,23 +216,9 @@
                 console.error("Spot Error:", e);
                 document.getElementById('spot').innerText = "รอข้อมูล...";
             }
-
-            let oldSpotPrice = 0;
-
-            // ... (ในฟังก์ชัน fetchGoldPrice) ...
-            if (numericPrice > oldSpotPrice) {
-                document.getElementById('spot').style.color = "#00ff00"; // เขียว
-            } else if (numericPrice < oldSpotPrice) {
-                document.getElementById('spot').style.color = "#ff0000"; // แดง
-            }
-            oldSpotPrice = numericPrice;
-
-            // สมมติว่า numericPrice คือ Spot และ fxRate คือค่าเงินบาทที่คุณดึงมาได้
-            updateGoldPriceAndChart(numericPrice, fxRate);
-
+            // ลบ updateGoldPriceAndChart(numericPrice, fxRate); ตรงนี้ออกไปแล้ว
         }
 
-        // อย่าลืมเรียกฟังก์ชันให้ทำงาน
         fetchGoldPrice();
         setInterval(fetchGoldPrice, 30000);
 
