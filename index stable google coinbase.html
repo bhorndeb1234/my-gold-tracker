@@ -57,12 +57,6 @@
             </div>
         </div>
 
-        <div style="width: 95%; max-width: 800px; margin: 20px auto; background: #1e1e1e; padding: 15px; border-radius: 10px;">
-            <canvas id="goldChart"></canvas>
-        </div>
-
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
         <p id="updateTime" class="text-[15px] text-center text-gray-500 italic mb-4">กำลังโหลดข้อมูล...</p>
 
         <button onclick="fetchGoldPrice()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded-xl transition duration-300">
@@ -97,63 +91,6 @@
     </script> -->
 
     <script>
-    // --- 1. ตั้งค่าเริ่มต้นกราฟ ---
-    let goldLabels = []; // เก็บเวลา
-    let goldData = [];   // เก็บราคาทองคำนวณได้
-    let myChart;
-
-    const ctx = document.getElementById('goldChart').getContext('2d');
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: goldLabels,
-            datasets: [{
-                label: 'ราคาไทยคำนวณ (96.5%)',
-                data: goldData,
-                borderColor: '#ffd700', // สีทอง
-                backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.3 // ความโค้งของเส้น
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { beginAtZero: false, grid: { color: '#333' } },
-                x: { grid: { color: '#333' } }
-            },
-            plugins: {
-                legend: { labels: { color: '#fff' } }
-            }
-        }
-    });
-
-    // --- 2. ฟังก์ชันคำนวณราคาทองไทย (เพิ่มเข้าไปใน fetchGoldPrice เดิมของคุณ) ---
-    async function updateGoldPriceAndChart(spot, fx) {
-        // สูตร: ((Spot + Premium 1.5) * 32.48 * FX) / 65.6
-        const premium = 1.5;
-        const thaiPrice = ((spot + premium) * 32.48 * fx) / 65.6;
-
-        // แสดงผลตัวเลขคำนวณ
-        // document.getElementById('thaiCalc').innerText = Math.round(thaiPrice).toLocaleString() + " บาท";
-
-        // อัปเดตกราฟ
-        const now = new Date();
-        const timeLabel = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
-
-        // เก็บข้อมูล (จำกัดแค่ 20 จุดล่าสุดเพื่อไม่ให้กราฟแน่นเกินไป)
-        if (goldLabels.length > 20) {
-            goldLabels.shift();
-            goldData.shift();
-        }
-
-        goldLabels.push(timeLabel);
-        goldData.push(Math.round(thaiPrice));
-
-        myChart.update(); // สั่งให้กราฟวาดใหม่
-    }
-
         async function fetchGoldPrice() {
             // 1. URL Proxy (ห้ามลืม /exec ที่ส่วนท้าย)
             const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
@@ -180,14 +117,9 @@
             }
 
             // --- ส่วนดึง FX (เงินบาท) ---
-            let fxRate = 0; // สร้างตัวแปรรอไว้ด้านนอก try หรือข้างบนสุดของฟังก์ชันก็ได้
             try {
                 const resEx = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
                 const dataEx = await resEx.json();
-                // 1. เก็บค่าที่เป็นตัวเลขไว้ในตัวแปร fxRate เพื่อเอาไปคำนวณ
-                fxRate = parseFloat(dataEx.rates.THB);
-
-                // 2. แสดงผลบนหน้าเว็บตามเดิม (แบบ String)
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
 
@@ -226,15 +158,11 @@
             }
             oldSpotPrice = numericPrice;
 
-            // สมมติว่า numericPrice คือ Spot และ fxRate คือค่าเงินบาทที่คุณดึงมาได้
-            updateGoldPriceAndChart(numericPrice, fxRate);
-
         }
 
         // อย่าลืมเรียกฟังก์ชันให้ทำงาน
         fetchGoldPrice();
         setInterval(fetchGoldPrice, 30000);
-
     </script>
 </body>
 </html>
