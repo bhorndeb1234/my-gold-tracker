@@ -184,6 +184,26 @@
                 }
             } catch (e) { console.error("Thai Gold Error", e); }
 
+            // --- ส่วนดึง FX (USD/THB) ให้ใกล้เคียง Tradingview ---
+            try {
+                // ใช้ Coinbase API ดึงค่า USD/THB โดยตรง
+                const resEx = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD");
+                const dataEx = await resEx.json();
+
+                if (dataEx && dataEx.data && dataEx.data.rates.THB) {
+                    fxRate = parseFloat(dataEx.data.rates.THB);
+
+                    // แสดงผล
+                    document.getElementById('fx').innerText = fxRate.toFixed(2) + " THB";
+                    console.log("✅ FX Updated (Coinbase):", fxRate);
+                }
+            } catch (e) {
+                console.error("FX Error:", e);
+                // ถ้า Coinbase พลาด ให้ใช้ตัวสำรอง (ExchangeRate-API เดิม)
+            }
+
+/*
+
             // --- ส่วนดึง FX (เงินบาท) ---
             try {
                 const resEx = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
@@ -191,6 +211,8 @@
                 fxRate = parseFloat(dataEx.rates.THB);
                 document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
             } catch (e) { console.error("FX Error:", e); }
+
+*/
 
             // --- 3. ดึง Gold Spot ---
             try {
