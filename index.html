@@ -109,6 +109,7 @@
     let myChart;
     let oldSpotPrice = 0;
     let fxRate = 0; // สร้างตัวแปรรอไว้ด้านนอก try หรือข้างบนสุดของฟังก์ชันก็ได้
+    let huaAsk965 = 0;
 
     const ctx = document.getElementById('goldChart').getContext('2d');
     myChart = new Chart(ctx, {
@@ -150,7 +151,8 @@
     async function updateGoldPriceAndChart(spot, fx) {
         // สูตร: ((Spot + Premium 1.5) * 32.48 * FX) / 65.6
         const premium = 0; //old 1.5
-        const thaiPrice = ((spot + premium) * 0.473 * fx);
+        //const thaiPrice = (spot * 0.473 * fx);
+        const thaiPrice = huaAsk965;
 
         // แสดงผลตัวเลขคำนวณ
         document.getElementById('thaiCalc').innerText = Math.round(thaiPrice).toLocaleString() + " บาท";
@@ -182,6 +184,7 @@
 
                 if (dataSeacon) {
                     document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
+                    huaAsk965 = dataSeacon.Ask965;
                     document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
                     document.getElementById('AskAssociation').innerText = (dataSeacon.AskAssociation || 0).toLocaleString();
                     document.getElementById('BidAssociation').innerText = (dataSeacon.BidAssociation || 0).toLocaleString();
