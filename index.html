@@ -286,7 +286,7 @@
                     // สูตรคำนวณราคาไทย
                     const spotPrice = closePrices[i];
                     if (spotPrice) { // เช็คว่ามีราคาปิดของวันนั้นไหม
-                        const thaiPrice = ((spotPrice + 1.5) * 32.48 * fxRate) / 65.6; //Gem formular
+                      //  const thaiPrice = ((spotPrice + 1.5) * 32.48 * fxRate) / 65.6; //Gem formular
                         const thaiPrice = (spotPrice * 0.473 * fxRate); //Ter formular
 
                         dailyLabels.push(label);
