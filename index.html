@@ -62,6 +62,11 @@
             <canvas id="goldChart"></canvas>
         </div>
 
+        <div style="width: 95%; max-width: 800px; margin: 20px auto; background: #1e1e1e; padding: 15px; border-radius: 10px;">
+            <h3 style="color: #ffd700; text-align: center; margin-bottom: 10px; font-family: sans-serif;">แนวโน้มราคาไทย 7 วันย้อนหลัง</h3>
+            <canvas id="historyChart"></canvas>
+        </div>
+
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
         <p id="updateTime" class="text-[15px] text-center text-gray-500 italic mb-4">กำลังโหลดข้อมูล...</p>
@@ -144,7 +149,7 @@
     // --- 2. ฟังก์ชันคำนวณราคาทองไทย (เพิ่มเข้าไปใน fetchGoldPrice เดิมของคุณ) ---
     async function updateGoldPriceAndChart(spot, fx) {
         // สูตร: ((Spot + Premium 1.5) * 32.48 * FX) / 65.6
-        const premium = 1.5;
+        const premium = 0; //old 1.5
         const thaiPrice = ((spot + premium) * 0.473 * fx);
 
         // แสดงผลตัวเลขคำนวณ
@@ -241,6 +246,8 @@
                         updateGoldPriceAndChart(numericPrice, fxRate);
                     }
 
+                    fetchHistoryData();
+
                 } else {
                     throw new Error("Data Format Error");
                 }
@@ -251,8 +258,79 @@
             // ลบ updateGoldPriceAndChart(numericPrice, fxRate); ตรงนี้ออกไปแล้ว
         }
 
+        let historyChart;
+
+        async function fetchHistoryData() {
+            try {
+                // ดึงข้อมูลย้อนหลัง 1 สัปดาห์จาก Coinbase
+                const res = await fetch("https://api.coinbase.com/v2/prices/XAU-USD/historic?period=week");
+                const json = await res.json();
+                const rawPrices = json.data.prices; // ข้อมูลจะเป็น [ {price, time}, ... ]
+
+                // เราจะสุ่มดึงข้อมูลมาวันละ 1 จุด เพื่อให้ได้ 7 วัน
+                let dailyLabels = [];
+                let dailyPrices = [];
+
+                // วนลูปดึงข้อมูลย้อนกลับไป 7 วัน (Coinbase ส่งข้อมูลมาเป็นรายชั่วโมง เราจะข้ามทุกๆ 24 ชม.)
+                for (let i = 0; i < 7; i++) {
+                    const index = i * 24 < rawPrices.length ? i * 24 : rawPrices.length - 1;
+                    const entry = rawPrices[index];
+                    const date = new Date(entry.time);
+                    const label = date.getDate() + "/" + (date.getMonth() + 1);
+
+                    // ใช้สูตรเดิมคำนวณราคาไทย (Spot + Premium 1.5) * 32.48 * FX / 65.6
+                    const spotPrice = parseFloat(entry.price);
+                    const thaiPrice = ((spotPrice + 1.5) * 32.48 * fxRate) / 65.6;
+
+                    // ใส่ข้อมูลเข้า Array (ใช้ unshift เพื่อให้เรียงจากอดีตไปปัจจุบัน)
+                    dailyLabels.unshift(label);
+                    dailyPrices.unshift(Math.round(thaiPrice));
+                }
+
+                // สร้างหรืออัปเดตกราฟ
+                const ctxH = document.getElementById('historyChart').getContext('2d');
+                if (historyChart) historyChart.destroy(); // ลบกราฟเก่าก่อนสร้างใหม่
+
+                historyChart = new Chart(ctxH, {
+                    type: 'bar', // ใช้กราฟแท่งเพื่อให้ดูแตกต่างจากกราฟ Real-time
+                    data: {
+                        labels: dailyLabels,
+                        datasets: [{
+                            label: 'ราคาทองไทยโดยประมาณ (บาท)',
+                            data: dailyPrices,
+                            backgroundColor: 'rgba(255, 215, 0, 0.4)',
+                            borderColor: '#ffd700',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        aspectRatio: 2,
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: { color: '#333' },
+                                ticks: { color: '#ccc' }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#ccc' }
+                            }
+                        },
+                        plugins: {
+                            legend: { labels: { color: '#fff' } }
+                        }
+                    }
+                });
+
+            } catch (e) {
+                console.error("History Chart Error:", e);
+            }
+        }
+
         fetchGoldPrice();
         setInterval(fetchGoldPrice, 30000);
+        setTimeout(fetchHistoryData, 3000);
 
     </script>
 </body>
