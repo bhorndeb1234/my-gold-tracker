@@ -262,41 +262,47 @@
 
         async function fetchHistoryData() {
             try {
-                // ดึงข้อมูลย้อนหลัง 1 สัปดาห์จาก Coinbase
-                const res = await fetch("https://api.coinbase.com/v2/prices/XAU-USD/historic?period=week");
-                const json = await res.json();
-                const rawPrices = json.data.prices; // ข้อมูลจะเป็น [ {price, time}, ... ]
+                // เปลี่ยนมาใช้ Yahoo Finance API (ดึงผ่าน Proxy ของคุณ)
+                const symbol = "GC=F"; // Gold Futures (หรือจะใช้ XAUUSD=X)
+                const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=7d&interval=1d`;
 
-                // เราจะสุ่มดึงข้อมูลมาวันละ 1 จุด เพื่อให้ได้ 7 วัน
+                const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
+                const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
+                const json = await res.json();
+
+                // แกะข้อมูลจากโครงสร้างของ Yahoo Finance
+                const result = json.chart.result[0];
+                const timestamps = result.timestamp; // [17000000, 17000001, ...]
+                const closePrices = result.indicators.quote[0].close; // [2010.5, 2020.1, ...]
+
                 let dailyLabels = [];
                 let dailyPrices = [];
 
-                // วนลูปดึงข้อมูลย้อนกลับไป 7 วัน (Coinbase ส่งข้อมูลมาเป็นรายชั่วโมง เราจะข้ามทุกๆ 24 ชม.)
-                for (let i = 0; i < 7; i++) {
-                    const index = i * 24 < rawPrices.length ? i * 24 : rawPrices.length - 1;
-                    const entry = rawPrices[index];
-                    const date = new Date(entry.time);
+                // วนลูปจัดการข้อมูล
+                for (let i = 0; i < timestamps.length; i++) {
+                    const date = new Date(timestamps[i] * 1000);
                     const label = date.getDate() + "/" + (date.getMonth() + 1);
 
-                    // ใช้สูตรเดิมคำนวณราคาไทย (Spot + Premium 1.5) * 32.48 * FX / 65.6
-                    const spotPrice = parseFloat(entry.price);
-                    const thaiPrice = ((spotPrice + 1.5) * 32.48 * fxRate) / 65.6;
+                    // สูตรคำนวณราคาไทย
+                    const spotPrice = closePrices[i];
+                    if (spotPrice) { // เช็คว่ามีราคาปิดของวันนั้นไหม
+                        const thaiPrice = ((spotPrice + 1.5) * 32.48 * fxRate) / 65.6;
 
-                    // ใส่ข้อมูลเข้า Array (ใช้ unshift เพื่อให้เรียงจากอดีตไปปัจจุบัน)
-                    dailyLabels.unshift(label);
-                    dailyPrices.unshift(Math.round(thaiPrice));
+                        dailyLabels.push(label);
+                        dailyPrices.push(Math.round(thaiPrice));
+                    }
                 }
 
-                // สร้างหรืออัปเดตกราฟ
+                // ส่วนสร้างกราฟ (เหมือนเดิม)
                 const ctxH = document.getElementById('historyChart').getContext('2d');
-                if (historyChart) historyChart.destroy(); // ลบกราฟเก่าก่อนสร้างใหม่
+                if (historyChart) historyChart.destroy();
 
                 historyChart = new Chart(ctxH, {
-                    type: 'bar', // ใช้กราฟแท่งเพื่อให้ดูแตกต่างจากกราฟ Real-time
+                    type: 'bar',
                     data: {
                         labels: dailyLabels,
                         datasets: [{
-                            label: 'ราคาทองไทยโดยประมาณ (บาท)',
+                            label: 'ราคาทองไทยย้อนหลัง 7 วัน (บาท)',
                             data: dailyPrices,
                             backgroundColor: 'rgba(255, 215, 0, 0.4)',
                             borderColor: '#ffd700',
@@ -307,18 +313,8 @@
                         responsive: true,
                         aspectRatio: 2,
                         scales: {
-                            y: {
-                                beginAtZero: false,
-                                grid: { color: '#333' },
-                                ticks: { color: '#ccc' }
-                            },
-                            x: {
-                                grid: { display: false },
-                                ticks: { color: '#ccc' }
-                            }
-                        },
-                        plugins: {
-                            legend: { labels: { color: '#fff' } }
+                            y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
+                            x: { grid: { display: false }, ticks: { color: '#ccc' } }
                         }
                     }
                 });
@@ -327,6 +323,8 @@
                 console.error("History Chart Error:", e);
             }
         }
+
+    }
 
         fetchGoldPrice();
         setInterval(fetchGoldPrice, 30000);
