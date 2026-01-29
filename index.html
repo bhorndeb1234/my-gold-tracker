@@ -224,10 +224,50 @@
 */
 
             // --- 3. ดึง Gold Spot ---
+        // --- 3. ดึง Gold Spot ---
         try {
+            const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
+            // แก้ไขบรรทัดนี้: เติม ?url= เข้าไป
+            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlKuCoin));
+            const rawData = await resSpot.json();
+
+            console.log("Raw Spot Data (KuCoin):", rawData);
+
+            if (rawData && rawData.data && rawData.data.price) {
+                const price = parseFloat(rawData.data.price);
+                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+                // --- ส่วนคำนวณสีและกราฟ ---
+                if (oldSpotPrice > 0) {
+                    document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
+                }
+                oldSpotPrice = price;
+
+                if (fxRate > 0) {
+                    updateGoldPriceAndChart(price, fxRate);
+                }
+            } else {
+                throw new Error("KuCoin data missing");
+            }
+        } catch (e) {
+            console.error("Spot Error:", e);
+            // แผนสำรอง: ดึงจาก CoinGecko (ต้องใช้ ?url= เช่นกัน)
+            try {
+                const urlCG = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd";
+                const resCG = await fetch(myProxy + "?url=" + encodeURIComponent(urlCG));
+                const dataCG = await resCG.json();
+                const priceCG = dataCG['pax-gold'].usd;
+                document.getElementById('spot').innerText = "$" + priceCG.toLocaleString(undefined, { minimumFractionDigits: 2 });
+            } catch (e2) {
+                document.getElementById('spot').innerText = "รอข้อมูล...";
+            }
+        }
+
+/*         try {
             // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
             const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
-            const resSpot = await fetch(myProxy + encodeURIComponent(urlKuCoin));
+            // แก้จากเดิม
+            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlKuCoin));
             const rawData = await resSpot.json();
 
             console.log("Raw Spot Data (KuCoin):", rawData);
@@ -248,7 +288,7 @@
             document.getElementById('spot').innerText = "รอข้อมูล...";
         }
 
-
+ */
             /*             try {
                 const resSpot = await fetch(mySpotProxy);
                 const rawData = await resSpot.json();
