@@ -174,7 +174,7 @@
     }
 
     async function fetchGoldPrice() {
-            const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
+            const myProxy = "https://script.google.com/macros/s/AKfycbz70SDNGMxZRGs0tlTZe6Bh_4RVpARGTD1wzdaMX6KD-Lqvk9IUKzJ1T_8ZhG7RkIeubQ/exec";
 
             // --- 1 & 2. ดึงราคาไทย ---
             try {
@@ -231,7 +231,8 @@
 */
 
             // --- 3. ดึง Gold Spot ---
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec';
+
+ /*        const gasUrl = 'https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec';
         // ใช้ allorigins เพื่อเลี่ยงปัญหา CORS
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(gasUrl)}`;
             try {
@@ -260,7 +261,7 @@
                 console.error("Spot Error:", error);
                 document.getElementById('spot-price').innerText = "รอข้อมูล (Error)";
             }
-
+ */
 
 /*             try {
                 const resSpot = await fetch(myProxy);
