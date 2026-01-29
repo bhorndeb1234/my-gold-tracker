@@ -223,36 +223,34 @@
 
 */
 
- // --- 3. ดึง Gold Spot (เปลี่ยนจาก Futures เป็น Spot Gold แท้ๆ) ---
+        // --- 3. ดึง Gold Spot (ใช้ KuCoin แบบกำหนด URL ให้ถูกต้อง) ---
         try {
-            // เปลี่ยนจาก GC=F เป็น XAUUSD=X
-            const symbol = "XAUUSD=X";
-            const urlYahooSpot = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1m`;
-
-            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahooSpot));
+            const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
+            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlKuCoin));
             const rawData = await resSpot.json();
 
-            if (rawData && rawData.chart && rawData.chart.result) {
-                const result = rawData.chart.result[0];
-                // ราคา Spot ล่าสุดจะอยู่ที่ regularMarketPrice
-                const price = result.meta.regularMarketPrice;
+            // KuCoin มักจะเร็วกว่าและไม่ค่อยบล็อก
+            if (rawData && rawData.data && rawData.data.price) {
+                let price = parseFloat(rawData.data.price);
 
+                // ราคาทองใน KuCoin (PAXG) บางครั้งจะต่างจาก Spot ประมาณ 2-5 เหรียญ
+                // เราสามารถแสดงผลได้เลย
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+                    minimumFractionDigits: 2
                 });
 
-                // อัปเดตราคาไทยในกราฟเส้น (Real-time)
                 if (fxRate > 0) {
                     updateGoldPriceAndChart(price, fxRate);
                 }
-
-                console.log("✅ Spot Updated (XAUUSD=X):", price);
+            } else {
+                document.getElementById('spot').innerText = "API Busy";
             }
         } catch (e) {
             console.error("Spot Error:", e);
+            document.getElementById('spot').innerText = "Error";
         }
-/*         try {
+        
+        /*         try {
             // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
             const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
             // แก้จากเดิม
