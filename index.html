@@ -232,41 +232,30 @@
 
 */
 
-        // --- 3. ดึง Gold Spot (เรียกจาก Google Apps Script ที่เราแก้ใหม่) ---
+        // --- 3. ดึง Gold Spot ---
         try {
-            // ใส่ URL ของ Google Script ของคุณตรงๆ โดยไม่ต้องต่อท้ายด้วย ?url= 
-            // เพราะเราเขียนดักไว้ใน doGet แล้วว่าถ้าไม่มี url ส่งมา ให้คืนราคาทอง
-            const mySpotProxy = "https://script.google.com/macros/s/AKfycbwTfAILpjEw18TpU4rw-uXagFw28pCUT21Elu63c14kf7Vv2GmzAs6ZuA6T45mGQE2vgg/exec";
-            
+            // ใช้ URL ล่าสุดที่คุณเพิ่ง Deploy มา
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycby7U-OvMp_wc0Uya2RPpgusNfHIEMJKIfO01c-91E1Jk49bom9NXeDx6JP0xi_zNBBoIg/exec";
+
+            // เรียกตรงๆ ไม่ต้องมี ?url= ต่อท้าย
             const resSpot = await fetch(mySpotProxy);
             const rawData = await resSpot.json();
 
-            console.log("Spot Data from GoogleFinance:", rawData);
-
             if (rawData && rawData.price) {
                 const price = parseFloat(rawData.price);
-
-                // แสดงผลในหน้าเว็บ
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
 
-                // อัปเดตสีและกราฟเส้น
-                if (oldSpotPrice > 0) {
-                    document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
-                }
-                oldSpotPrice = price;
-
+                // ... โค้ดคำนวณสีและกราฟของคุณ ...
                 if (fxRate > 0) {
                     updateGoldPriceAndChart(price, fxRate);
                 }
             }
         } catch (e) {
-            console.error("Spot Error (GoogleFinance):", e);
-            document.getElementById('spot').innerText = "รอข้อมูล...";
-        }
-        
+            console.error("Spot Error:", e);
+        }        
         
         /*         try {
             // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
