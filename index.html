@@ -232,42 +232,47 @@
 
             // --- 3. ดึง Gold Spot ---
             
-            try {
-                const resSpot = await fetch(myProxy);
-                const rawData = await resSpot.json();
-                let price = rawData.price || (rawData.data && rawData.data.amount);
+            const myProxy = "https://script.google.com/macros/s/AKfycbx_qbwG4EFHHBCRNVonAuHxPOG5s-l6sSBWVQdqqsFpkoJB0u2FqZl7CHvVu8kRzzMNag/exec";
+        const callbackName = 'callback_' + Math.round(100000 * Math.random());
 
-                if (price) {
-                    const numericPrice = parseFloat(price);
-                    document.getElementById('spot').innerText = "$ " + numericPrice.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
+        // นิยามฟังก์ชันรับข้อมูลที่ส่งกลับมา
+        window[callbackName] = function (rawData) {
+            // แกะราคาตามโครงสร้าง Coinbase (ปรับตาม API ที่คุณใช้)
+            let price = rawData.price || (rawData.data && rawData.data.amount);
 
-                    // --- ส่วนคำนวณสีและกราฟ (อยู่ในที่ที่ปลอดภัยแล้ว) ---
-                    if (oldSpotPrice > 0) { // ป้องกันการขึ้นสีแดง/เขียวในครั้งแรกที่โหลด
-                        if (numericPrice > oldSpotPrice) {
-                            document.getElementById('spot').style.color = "#00ff00";
-                        } else if (numericPrice < oldSpotPrice) {
-                            document.getElementById('spot').style.color = "#ff0000";
-                        }
-                    }
-                    oldSpotPrice = numericPrice;
+            if (price) {
+                const numericPrice = parseFloat(price);
+                document.getElementById('spot').innerText = "$ " + numericPrice.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
 
-                    if (fxRate > 0) {
-                        updateGoldPriceAndChart(numericPrice, fxRate);
-                    }
-
-                    fetchHistoryData();
-
-                } else {
-                    throw new Error("Data Format Error");
+                // คำนวณสี
+                if (oldSpotPrice > 0) {
+                    document.getElementById('spot').style.color = (numericPrice > oldSpotPrice) ? "#00ff00" : (numericPrice < oldSpotPrice ? "#ff0000" : "#ffffff");
                 }
-            } catch (e) {
-                console.error("Spot Error:", e);
-                document.getElementById('spot').innerText = "รอข้อมูล...";
+                oldSpotPrice = numericPrice;
+
+                if (fxRate > 0) {
+                    updateGoldPriceAndChart(numericPrice, fxRate);
+                }
+
+                // เรียกดึงข้อมูลประวัติกราฟต่อ
+                fetchHistoryData();
             }
-            // ลบ updateGoldPriceAndChart(numericPrice, fxRate); ตรงนี้ออกไปแล้ว
+
+            // ลบ Script tag ทิ้งเพื่อความสะอาด
+            delete window[callbackName];
+            const scriptTag = document.getElementById('jsonp-spot');
+            if (scriptTag) scriptTag.remove();
+        };
+
+        // สร้าง Tag เพื่อดึงข้อมูล (เลี่ยง CORS)
+        const script = document.createElement('script');
+        script.id = 'jsonp-spot';
+        script.src = `${myProxy}?callback=${callbackName}`;
+        document.body.appendChild(script);
+
     }
 
         let historyChart;
