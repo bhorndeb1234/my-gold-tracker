@@ -223,23 +223,19 @@
 
 */
 
-        // --- 3. ดึง Gold Spot (แหล่งข้อมูล Yahoo Finance เพื่อให้ตรงกับ TradingView) ---
+            // --- 3. ดึง Gold Spot ---
+        // --- 3. ดึง Gold Spot ---
         try {
-            const symbol = "GC=F"; // Gold Futures (หรือจะใช้ XAUUSD=X)
-            const urlYahooSpot = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1m`;
-
-            // ใช้ myProxy ตัวเดิม และอย่าลืม ?url=
-            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahooSpot));
+            const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
+            // แก้ไขบรรทัดนี้: เติม ?url= เข้าไป
+            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlKuCoin));
             const rawData = await resSpot.json();
 
-            if (rawData && rawData.chart && rawData.chart.result) {
-                const result = rawData.chart.result[0];
-                const price = result.meta.regularMarketPrice; // ดึงราคาตลาดล่าสุด
+            console.log("Raw Spot Data (KuCoin):", rawData);
 
-                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
+            if (rawData && rawData.data && rawData.data.price) {
+                const price = parseFloat(rawData.data.price);
+                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, { minimumFractionDigits: 2 });
 
                 // --- ส่วนคำนวณสีและกราฟ ---
                 if (oldSpotPrice > 0) {
@@ -250,13 +246,23 @@
                 if (fxRate > 0) {
                     updateGoldPriceAndChart(price, fxRate);
                 }
-
-                console.log("✅ Spot Updated (Yahoo):", price);
+            } else {
+                throw new Error("KuCoin data missing");
             }
         } catch (e) {
-            console.error("Spot Error (Yahoo):", e);
-            document.getElementById('spot').innerText = "รอข้อมูล...";
+            console.error("Spot Error:", e);
+            // แผนสำรอง: ดึงจาก CoinGecko (ต้องใช้ ?url= เช่นกัน)
+            try {
+                const urlCG = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd";
+                const resCG = await fetch(myProxy + "?url=" + encodeURIComponent(urlCG));
+                const dataCG = await resCG.json();
+                const priceCG = dataCG['pax-gold'].usd;
+                document.getElementById('spot').innerText = "$" + priceCG.toLocaleString(undefined, { minimumFractionDigits: 2 });
+            } catch (e2) {
+                document.getElementById('spot').innerText = "รอข้อมูล...";
+            }
         }
+
 /*         try {
             // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
             const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
