@@ -223,32 +223,40 @@
 
 */
 
-        // --- 3. ดึง Gold Spot (ใช้ KuCoin แบบกำหนด URL ให้ถูกต้อง) ---
+        // --- 3. ดึง Gold Spot (XAU/USD) ให้ตรง TradingView ---
         try {
-            const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
-            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlKuCoin));
-            const rawData = await resSpot.json();
+            // ใช้สัญลักษณ์ XAU/USD จากแหล่งข้อมูลที่เสถียร
+            const urlSpot = "https://query1.finance.yahoo.com/v8/finance/chart/XAUUSD=X?interval=1m&range=1d";
 
-            // KuCoin มักจะเร็วกว่าและไม่ค่อยบล็อก
-            if (rawData && rawData.data && rawData.data.price) {
-                let price = parseFloat(rawData.data.price);
+            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlSpot));
+            const json = await resSpot.json();
 
-                // ราคาทองใน KuCoin (PAXG) บางครั้งจะต่างจาก Spot ประมาณ 2-5 เหรียญ
-                // เราสามารถแสดงผลได้เลย
+            if (json && json.chart && json.chart.result) {
+                const meta = json.chart.result[0].meta;
+                // regularMarketPrice คือราคาปัจจุบันที่ TradingView ใช้
+                const price = meta.regularMarketPrice;
+
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
-                    minimumFractionDigits: 2
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
                 });
+
+                // อัปเดตสี (เขียว/แดง)
+                if (oldSpotPrice > 0) {
+                    document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
+                }
+                oldSpotPrice = price;
 
                 if (fxRate > 0) {
                     updateGoldPriceAndChart(price, fxRate);
                 }
-            } else {
-                document.getElementById('spot').innerText = "API Busy";
             }
         } catch (e) {
             console.error("Spot Error:", e);
-            document.getElementById('spot').innerText = "Error";
+            // ถ้า Yahoo บล็อก ให้สลับไปใช้แผนสำรอง (ราคาจะห่างกันไม่เกิน 1-2 เหรียญ)
+            fetchSpotBackup();
         }
+        
         
         /*         try {
             // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
