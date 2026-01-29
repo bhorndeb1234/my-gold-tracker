@@ -235,8 +235,8 @@
         // --- 3. ดึง Gold Spot (เปลี่ยนมาใช้ API ของโบรคเกอร์เพื่อให้ตรง TradingView) ---
         try {
             // ใช้ API จาก fusions-api หรือแหล่งอื่นที่ยังเปิดอยู่
-            const urlSpot = "https://fapi.fusionmedia.co/api/hermes/realtime/top?indices_id=68";
-            // ถ้า URL บนใช้ไม่ได้ ให้ใช้สำรอง: https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT
+            const urlSpot = "https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT";
+            // ถ้า URL บนใช้ไม่ได้ ให้ใช้สำรอง: https://fapi.fusionmedia.co/api/hermes/realtime/top?indices_id=68 
 
             const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlSpot));
             const json = await resSpot.json();
