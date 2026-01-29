@@ -223,39 +223,34 @@
 
 */
 
-        // --- 3. ดึง Gold Spot (แหล่งข้อมูล Yahoo Finance เพื่อให้ตรงกับ TradingView) ---
+ // --- 3. ดึง Gold Spot (เปลี่ยนจาก Futures เป็น Spot Gold แท้ๆ) ---
         try {
-            const symbol = "GC=F"; // Gold Futures (หรือจะใช้ XAUUSD=X)
+            // เปลี่ยนจาก GC=F เป็น XAUUSD=X
+            const symbol = "XAUUSD=X";
             const urlYahooSpot = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1m`;
 
-            // ใช้ myProxy ตัวเดิม และอย่าลืม ?url=
             const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahooSpot));
             const rawData = await resSpot.json();
 
             if (rawData && rawData.chart && rawData.chart.result) {
                 const result = rawData.chart.result[0];
-                const price = result.meta.regularMarketPrice; // ดึงราคาตลาดล่าสุด
+                // ราคา Spot ล่าสุดจะอยู่ที่ regularMarketPrice
+                const price = result.meta.regularMarketPrice;
 
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
 
-                // --- ส่วนคำนวณสีและกราฟ ---
-                if (oldSpotPrice > 0) {
-                    document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
-                }
-                oldSpotPrice = price;
-
+                // อัปเดตราคาไทยในกราฟเส้น (Real-time)
                 if (fxRate > 0) {
                     updateGoldPriceAndChart(price, fxRate);
                 }
 
-                console.log("✅ Spot Updated (Yahoo):", price);
+                console.log("✅ Spot Updated (XAUUSD=X):", price);
             }
         } catch (e) {
-            console.error("Spot Error (Yahoo):", e);
-            document.getElementById('spot').innerText = "รอข้อมูล...";
+            console.error("Spot Error:", e);
         }
 /*         try {
             // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
