@@ -175,6 +175,7 @@
 
     async function fetchGoldPrice() {
             const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbxK4aDuezUe5j1-bujlSOWzO6AjskqEov-zRihXn_cDr_vYECI3gwynn4QvoXpiwnQG0g/exec?url=";
 
             // --- 1 & 2. ดึงราคาไทย ---
             try {
@@ -224,7 +225,7 @@
 
             // --- 3. ดึง Gold Spot ---
             try {
-                const resSpot = await fetch(myProxy);
+                const resSpot = await fetch(mySpotProxy);
                 const rawData = await resSpot.json();
                 let price = rawData.price || (rawData.data && rawData.data.amount);
 
