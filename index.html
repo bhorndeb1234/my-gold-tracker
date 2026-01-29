@@ -236,8 +236,9 @@
         try {
             // ใส่ URL ของ Google Script ของคุณตรงๆ โดยไม่ต้องต่อท้ายด้วย ?url= 
             // เพราะเราเขียนดักไว้ใน doGet แล้วว่าถ้าไม่มี url ส่งมา ให้คืนราคาทอง
-            const mySpotProxy = "https://script.google.com/macros/s/AKfycbygFy2pJz_-i1rCRpkQvDIzArtE2LTG209wQqPMjAnLdoIZuGBr7x4dgpy6R5jT36eqog/exec";
-            //https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbyawMgfs_3VnIfMcQOMd-wZ48DhDzHrVIFnnJM0xdGy92a7SRN4jgJ-FTWJMv-XyJun1w/exec";
+            
+                        //https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec
                       
 
             const resSpot = await fetch(mySpotProxy);
