@@ -231,20 +231,25 @@
 */
 
             // --- 3. ดึง Gold Spot ---
-        const url = 'https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec';
-
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec';
+        // ใช้ allorigins เพื่อเลี่ยงปัญหา CORS
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(gasUrl)}`;
             try {
                 // ใช้ fetch แบบปกติ ไม่ต้องใส่ headers ใดๆ
-                const response = await fetch(url);
+                const response = await fetch(proxyUrl);
 
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
 
                 const data = await response.json();
-                console.log("Data received:", data);
-                // นำข้อมูลไปแสดงผลต่อ...
-                let price = data.price || (data.data && data.data.amount);
+
+                // ข้อมูลจริงจะอยู่ใน data.contents (ซึ่งเป็น String ต้อง parse อีกรอบ)
+                const finalData = JSON.parse(data.contents);
+
+                console.log("Spot Data:", finalData);
+                // นำ finalData ไปใช้งานต่อ...
+                let price = finalData.price || (finalData.data && finalData.data.amount);
                 const numericPrice = parseFloat(price);
                 document.getElementById('spot').innerText = "$ " + numericPrice.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
