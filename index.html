@@ -232,19 +232,21 @@
 
 */
 
-        // --- 3. ดึง Gold Spot (เปลี่ยนมาใช้ API ของโบรคเกอร์เพื่อให้ตรง TradingView) ---
+        // --- 3. ดึง Gold Spot (เรียกจาก Google Apps Script ที่เราแก้ใหม่) ---
         try {
-            // ใช้ API จาก fusions-api หรือแหล่งอื่นที่ยังเปิดอยู่
-            const urlSpot = "https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT";
-            // ถ้า URL บนใช้ไม่ได้ ให้ใช้สำรอง: https://fapi.fusionmedia.co/api/hermes/realtime/top?indices_id=68 
+            // ใส่ URL ของ Google Script ของคุณตรงๆ โดยไม่ต้องต่อท้ายด้วย ?url= 
+            // เพราะเราเขียนดักไว้ใน doGet แล้วว่าถ้าไม่มี url ส่งมา ให้คืนราคาทอง
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
 
-            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlSpot));
-            const json = await resSpot.json();
+            const resSpot = await fetch(mySpotProxy);
+            const rawData = await resSpot.json();
 
-            // การแกะข้อมูลจาก Fusion (ราคาสด XAU/USD)
-            if (json && json.data && json.data[0]) {
-                const price = parseFloat(json.data[0].last_value);
+            console.log("Spot Data from GoogleFinance:", rawData);
 
+            if (rawData && rawData.price) {
+                const price = parseFloat(rawData.price);
+
+                // แสดงผลในหน้าเว็บ
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
@@ -261,13 +263,10 @@
                 }
             }
         } catch (e) {
-            console.error("Spot Error (New Source):", e);
-            // แผนสำรอง: ถ้าข้างบนล้มเหลว ให้ใช้ราคาจาก Binance (PAXG) ซึ่งใกล้เคียงมาก
-            const resBinance = await fetch(myProxy + "?url=" + encodeURIComponent("https://api.binance.com/api/v3/ticker/price?symbol=PAXGUSDT"));
-            const dataB = await resBinance.json();
-            const pB = parseFloat(dataB.price);
-            document.getElementById('spot').innerText = "$" + pB.toLocaleString();
+            console.error("Spot Error (GoogleFinance):", e);
+            document.getElementById('spot').innerText = "รอข้อมูล...";
         }
+        
         
         /*         try {
             // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
