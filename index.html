@@ -232,31 +232,41 @@
 
 */
 
-        // --- 3. ดึง Gold Spot ---
+        // --- 3. ดึง Gold Spot (ปรับปรุงใหม่) ---
         try {
-            // ใช้ URL ล่าสุดที่คุณเพิ่ง Deploy มา
-            const mySpotProxy = "https://script.google.com/macros/s/AKfycbxzISOD7O1C7LpxCS_MUNZp0vRyOtenM8cvgqpXhfZAm1wklDkmUk_VnmgGdrcnflepQg/exec";
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbz8z2p-3IBsqwI0zF4TuNPPmaCvJ9lRFXmUzf1-sfMBpu8wnqvzGELPdcc1Wk4a4uV0gQ/exec";
 
-            // เรียกตรงๆ ไม่ต้องมี ?url= ต่อท้าย
             const resSpot = await fetch(mySpotProxy);
-            const rawData = await resSpot.json();
+            const priceText = await resSpot.text(); // รับค่าเป็นข้อความตรงๆ
 
-            if (rawData && rawData.price) {
-                const price = parseFloat(rawData.price);
+            console.log("Spot Price Received:", priceText);
+
+            if (priceText && priceText !== "0" && !isNaN(priceText)) {
+                const price = parseFloat(priceText);
+
+                // แสดงผล
                 document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                 });
 
-                // ... โค้ดคำนวณสีและกราฟของคุณ ...
-                if (fxRate > 0) {
+                // อัปเดตสี
+                if (oldSpotPrice > 0) {
+                    document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
+                }
+                oldSpotPrice = price;
+
+                // วาดกราฟและคำนวณราคาไทย
+                if (typeof fxRate !== 'undefined' && fxRate > 0) {
                     updateGoldPriceAndChart(price, fxRate);
                 }
+            } else {
+                document.getElementById('spot').innerText = "รอราคา...";
             }
         } catch (e) {
-            console.error("Spot Error:", e);
+            console.error("Spot Fetch Error:", e);
+            document.getElementById('spot').innerText = "Error";
         }        
-        
         /*         try {
             // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
             const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
