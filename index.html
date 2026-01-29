@@ -6,52 +6,70 @@
     <title>HSH Gold Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-gray-800 rounded-3xl shadow-2xl p-6 border border-yellow-600/30">
-        <h1 class="text-2xl font-bold text-center text-yellow-500 mb-6">Huasengheng Price</h1>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col p-0">
+    <div class="w-full bg-gray-800 p-2 border-none">
+        <h1 class="text-2xl font-bold text-center text-yellow-500 mb-6">ฮั่วเซ่งเฮง</h1>
 
-        <div class="bg-gray-700 rounded-2xl p-4 mb-4 text-center">
-            <p class="text-sm text-gray-400">ทองแท่ง 96.5%</p>
-            <div class="flex justify-around mt-2">
-              <div>
-                  <p class="text-xs text-green-400">รับซื้อ</p>
-                  <p id="bid965" class="text-2xl font-bold text-green-800">---</p>
+        <div class="bg-gray-700 rounded-2xl p-2 mb-4 text-center">
+            <p class="text-ml text-gray-400">ทองแท่ง 96.5%</p>
+            <div class="flex justify-around p-2 mt-0 text-center">
+                <div class="flex flex-col items-center">
+                    <p class="text-ml text-red-400 mb-1">รับซื้อ</p>
+                    <p id="bid965" class="text-4xl text-red-500">---</p>
+                </div>
+
+                <div class="h-16 border-l border-gray-600"></div>
+
+                <div class="flex flex-col items-center">
+                    <p class="text-ml text-green-400 mb-1">ขายออก</p>
+                    <p id="ask965" class="text-4xl text-green-500">---</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-700 rounded-2xl p-2 mb-4 text-center">
+            <p class="text-ml text-gray-400">สมาคม 96.5%</p>
+            <div class="flex justify-around p-2 mt-0 text-center">
+              <div class="flex flex-col items-center">
+                  <p class="text-ml text-red-400">รับซื้อ</p>
+                  <p id="BidAssociation" class="text-4xl text-red-500">---</p>
               </div>
               <div class="border-l border-gray-600"></div>
-                <div>
-                    <p class="text-xs text-red-400">ขายออก</p>
-                    <p id="ask965" class="text-2xl font-bold text-red-800">---</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-gray-700 rounded-2xl p-4 mb-4 text-center">
-            <p class="text-sm text-gray-400">สมาคม 96.5%</p>
-            <div class="flex justify-around mt-2">
-              <div>
-                  <p class="text-xs text-green-400">รับซื้อ</p>
-                  <p id="BidAssociation" class="text-2xl font-bold text-green-500">---</p>
+              <div class="flex flex-col items-center">
+                  <p class="text-ml text-green-400">ขายออก</p>
+                  <p id="AskAssociation" class="text-4xl text-green-500">---</p>
               </div>
-                <div class="border-l border-gray-600"></div>
-                <div>
-                    <p class="text-xs text-red-400">ขายออก</p>
-                    <p id="AskAssociation" class="text-2xl font-bold text-red-500">---</p>
-                </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="bg-gray-700 rounded-2xl p-3 text-center">
-                <p class="text-xs text-gray-400">Spot Gold ($)</p>
-                <p id="spot" class="text-lg font-semibold text-white">---</p>
-            </div>
-            <div class="bg-gray-700 rounded-2xl p-3 text-center">
-                <p class="text-xs text-gray-400">USD/THB</p>
-                <p id="fx" class="text-lg font-semibold text-white">---</p>
+        <div class="bg-gray-700 rounded-2xl p-2 text-center">
+            <p class="text-2m text-gray-400">สปอท และ ค่าเงินบาท</p>
+        </div>
+        <div class="grid grid-cols-2 gap-1 text-center">
+              <div class="bg-gray-700 rounded-2xl p-2 mb-8 text-center">
+                  <p class="text-ml mb-2 text-gray-400">Spot Gold ($)</p>
+                  <p id="spot" class="text-4xl text-white">---</p>
+              </div>
+              <div class="bg-gray-700 rounded-2xl p-2 mb-8 text-center">
+                  <p class="text-ml mb-2 text-gray-400">USD/THB</p>
+                  <p id="fx" class="text-4xl text-white">---</p>
+              </div>
             </div>
         </div>
 
-        <p id="updateTime" class="text-[10px] text-center text-gray-500 italic mb-4">กำลังโหลดข้อมูล...</p>
+        <div class="text-center mt-2" id="thaiCalc"></div>
+        <div style="width: 95%; max-width: 800px; margin: 10px auto; background: #1e1e1e; padding: 10px; border-radius: 10px;">
+            <canvas id="goldChart"></canvas>
+        </div>
+
+        <div style="width: 95%; max-width: 800px; margin: 20px auto; background: #1e1e1e; padding: 15px; border-radius: 10px;">
+            <h3 style="color: #ffd700; text-align: center; margin-bottom: 10px; font-family: sans-serif;">แนวโน้มราคาไทย 7 วันย้อนหลัง</h3>
+            <canvas id="historyChart"></canvas>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+        <p id="updateTime" class="text-[15px] text-center text-gray-500 italic mb-4">กำลังโหลดข้อมูล...</p>
 
         <button onclick="fetchGoldPrice()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded-xl transition duration-300">
             Refresh Now
@@ -84,36 +102,128 @@
         fetchGoldPrice();
     </script> -->
 
-    <script>
-    async function fetchGoldPrice() {
-        const updateTimeEl = document.getElementById('updateTime');
-        updateTimeEl.innerText = "กำลังอัปเดต...";
+  <script>
+    // --- 1. ตั้งค่าเริ่มต้นกราฟ ---
+    let goldLabels = []; // เก็บเวลา
+    let goldData = [];   // เก็บราคาทองคำนวณได้
+    let myChart;
+    let oldSpotPrice = 0;
+    let fxRate = 0; // สร้างตัวแปรรอไว้ด้านนอก try หรือข้างบนสุดของฟังก์ชันก็ได้
+    let huaAsk965 = 0;
 
-        const myProxy = "https://script.google.com/macros/s/AKfycbxK4aDuezUe5j1-bujlSOWzO6AjskqEov-zRihXn_cDr_vYECI3gwynn4QvoXpiwnQG0g/exec?url=";
-
-        // 1. ดึงราคาทองไทย (ผ่าน Proxy)
-        try {
-            const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
-            const resSeacon = await fetch(myProxy + encodeURIComponent(urlSeacon));
-            const dataSeacon = await resSeacon.json();
-
-            if (dataSeacon) {
-                document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
-                document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
-                document.getElementById('AskAssociation').innerText = (dataSeacon.AskAssociation || 0).toLocaleString();
-                document.getElementById('BidAssociation').innerText = (dataSeacon.BidAssociation || 0).toLocaleString();
-                document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965;
+    const ctx = document.getElementById('goldChart').getContext('2d');
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: goldLabels,
+            datasets: [{
+                label: 'ราคาไทยคำนวณ (96.5%)',
+                data: goldData,
+                borderColor: '#ffd700', // สีทอง
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3 // ความโค้งของเส้น
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: false, grid: { color: '#333' } },
+                x: { grid: { color: '#333' } }
+            },
+            layout: {
+                padding: {
+                    top: 0,    // ลดช่องว่างด้านบน
+                    bottom: 0
+                }
+            },
+            plugins: {
+                legend: {
+                      display: true, // หรือเปลี่ยนเป็น false ถ้าไม่อยากให้มีชื่อ Dataset ด้านบน
+                    labels: { color: '#fff', boxWidth: 12 }
+                }
             }
-        } catch (e) { console.error("Thai Gold Error:", e); }
+        }
+    });
 
-        // 2. ดึงค่าเงิน USD/THB (ดึงตรง ไม่ต้องผ่าน Proxy)
-        try {
-            const resEx = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
-            const dataEx = await resEx.json();
-            document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
-        } catch (e) { console.error("FX Error:", e); }
+    // --- 2. ฟังก์ชันคำนวณราคาทองไทย (เพิ่มเข้าไปใน fetchGoldPrice เดิมของคุณ) ---
+    async function updateGoldPriceAndChart(spot, fx) {
+        // สูตร: ((Spot + Premium 1.5) * 32.48 * FX) / 65.6
+        const premium = 0; //old 1.5
+        //const thaiPrice = (spot * 0.473 * fx);
+        const thaiPrice = huaAsk965;
 
-        // 3. ดึง Gold Spot (ราคาโลก) - เปลี่ยนไปใช้ KuCoin แทน Binance
+        // แสดงผลตัวเลขคำนวณ
+        document.getElementById('thaiCalc').innerText = Math.round(thaiPrice).toLocaleString() + " บาท";
+
+        // อัปเดตกราฟ
+        const now = new Date();
+        const timeLabel = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
+
+        // เก็บข้อมูล (จำกัดแค่ 20 จุดล่าสุดเพื่อไม่ให้กราฟแน่นเกินไป)
+        if (goldLabels.length > 20) {
+            goldLabels.shift();
+            goldData.shift();
+        }
+
+        goldLabels.push(timeLabel);
+        goldData.push(Math.round(thaiPrice));
+
+        myChart.update(); // สั่งให้กราฟวาดใหม่
+    }
+
+    async function fetchGoldPrice() {
+            const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbxK4aDuezUe5j1-bujlSOWzO6AjskqEov-zRihXn_cDr_vYECI3gwynn4QvoXpiwnQG0g/exec?url=";
+
+            // --- 1 & 2. ดึงราคาไทย ---
+            try {
+                const urlSeacon = "https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon";
+                const resSeacon = await fetch(myProxy + "?url=" + encodeURIComponent(urlSeacon));
+                const dataSeacon = await resSeacon.json();
+
+                if (dataSeacon) {
+                    document.getElementById('ask965').innerText = (dataSeacon.Ask965 || 0).toLocaleString();
+                    huaAsk965 = dataSeacon.Ask965;
+                    document.getElementById('bid965').innerText = (dataSeacon.Bid965 || 0).toLocaleString();
+                    document.getElementById('AskAssociation').innerText = (dataSeacon.AskAssociation || 0).toLocaleString();
+                    document.getElementById('BidAssociation').innerText = (dataSeacon.BidAssociation || 0).toLocaleString();
+                    document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965 || "---";
+                }
+            } catch (e) { console.error("Thai Gold Error", e); }
+
+            // --- ส่วนดึง FX (USD/THB) ให้ใกล้เคียง Tradingview ---
+            try {
+                // ใช้ Coinbase API ดึงค่า USD/THB โดยตรง
+                const resEx = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD");
+                const dataEx = await resEx.json();
+
+                if (dataEx && dataEx.data && dataEx.data.rates.THB) {
+                    fxRate = parseFloat(dataEx.data.rates.THB);
+
+                    // แสดงผล
+                    document.getElementById('fx').innerText = fxRate.toFixed(2) + " THB";
+                    console.log("✅ FX Updated (Coinbase):", fxRate);
+                }
+            } catch (e) {
+                console.error("FX Error:", e);
+                // ถ้า Coinbase พลาด ให้ใช้ตัวสำรอง (ExchangeRate-API เดิม)
+            }
+
+/*
+
+            // --- ส่วนดึง FX (เงินบาท) ---
+            try {
+                const resEx = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+                const dataEx = await resEx.json();
+                fxRate = parseFloat(dataEx.rates.THB);
+                document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
+            } catch (e) { console.error("FX Error:", e); }
+
+*/
+
+            // --- 3. ดึง Gold Spot ---
         try {
             // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
             const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
@@ -124,14 +234,14 @@
 
             if (rawData && rawData.data && rawData.data.price) {
                 const price = parseFloat(rawData.data.price);
-                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, { minimumFractionDigits: 2 });
             } else {
                 // แผนสำรองสุดท้าย: ถ้า KuCoin พัง ให้ใช้ราคาจาก CoinGecko
                 const urlCG = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd";
-                const resCG = await fetch(myProxy + encodeURIComponent(urlCG));
+                const resCG = await fetch(mySpotProxy + encodeURIComponent(urlCG));
                 const dataCG = await resCG.json();
                 const priceCG = dataCG['pax-gold'].usd;
-                document.getElementById('spot').innerText = "$" + priceCG.toLocaleString(undefined, {minimumFractionDigits: 2});
+                document.getElementById('spot').innerText = "$" + priceCG.toLocaleString(undefined, { minimumFractionDigits: 2 });
             }
         } catch (e) {
             console.error("Spot Error:", e);
@@ -139,19 +249,117 @@
         }
 
 
+            /*             try {
+                const resSpot = await fetch(mySpotProxy);
+                const rawData = await resSpot.json();
+                let price = rawData.price || (rawData.data && rawData.data.amount);
+
+                if (price) {
+                    const numericPrice = parseFloat(price);
+                    document.getElementById('spot').innerText = "$ " + numericPrice.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                    // --- ส่วนคำนวณสีและกราฟ (อยู่ในที่ที่ปลอดภัยแล้ว) ---
+                    if (oldSpotPrice > 0) { // ป้องกันการขึ้นสีแดง/เขียวในครั้งแรกที่โหลด
+                        if (numericPrice > oldSpotPrice) {
+                            document.getElementById('spot').style.color = "#00ff00";
+                        } else if (numericPrice < oldSpotPrice) {
+                            document.getElementById('spot').style.color = "#ff0000";
+                        }
+                    }
+                    oldSpotPrice = numericPrice;
+
+                    if (fxRate > 0) {
+                        updateGoldPriceAndChart(numericPrice, fxRate);
+                    }
+
+                    fetchHistoryData();
+
+                } else {
+                    throw new Error("Data Format Error");
+                }
+            } catch (e) {
+                console.error("Spot Error:", e);
+                document.getElementById('spot').innerText = "รอข้อมูล...";
+            }
+ */            // ลบ updateGoldPriceAndChart(numericPrice, fxRate); ตรงนี้ออกไปแล้ว
     }
 
+        let historyChart;
 
-    // เรียกทำงานทันทีที่โหลดหน้า
-    fetchGoldPrice();
+        async function fetchHistoryData() {
+            try {
+                // เปลี่ยนมาใช้ Yahoo Finance API (ดึงผ่าน Proxy ของคุณ)
+                const symbol = "GC=F"; // Gold Futures (หรือจะใช้ XAUUSD=X)
+                const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=7d&interval=1d`;
 
-    // 1. ตั้งค่าให้รีเฟรชข้อมูลอัตโนมัติทุกๆ 30 วินาที
-    setInterval(fetchGoldPrice, 30000);
+                const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
+                const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
+                const json = await res.json();
 
-    // 2. ฟังก์ชันตกแต่งเพิ่มเติม (ถ้าต้องการให้ราคาขยับแล้วมีสี)
-    // คุณสามารถเพิ่ม Logic ตรวจสอบได้ว่าถ้าราคาใหม่ > ราคาเก่า ให้เป็นสีเขียวชั่วคราวได้ครับ
+                // แกะข้อมูลจากโครงสร้างของ Yahoo Finance
+                const result = json.chart.result[0];
+                const timestamps = result.timestamp; // [17000000, 17000001, ...]
+                const closePrices = result.indicators.quote[0].close; // [2010.5, 2020.1, ...]
+
+                let dailyLabels = [];
+                let dailyPrices = [];
+
+                // วนลูปจัดการข้อมูล
+                for (let i = 0; i < timestamps.length; i++) {
+                    const date = new Date(timestamps[i] * 1000);
+                    const label = date.getDate() + "/" + (date.getMonth() + 1);
+
+                    // สูตรคำนวณราคาไทย
+                    const spotPrice = closePrices[i];
+                    if (spotPrice) { // เช็คว่ามีราคาปิดของวันนั้นไหม
+                      //  const thaiPrice = ((spotPrice + 1.5) * 32.48 * fxRate) / 65.6; //Gem formular
+                        const thaiPrice = (spotPrice * 0.473 * fxRate); //Ter formular
+
+                        dailyLabels.push(label);
+                        dailyPrices.push(Math.round(thaiPrice));
+                    }
+                }
+
+                // ส่วนสร้างกราฟ (เหมือนเดิม)
+                const ctxH = document.getElementById('historyChart').getContext('2d');
+                if (historyChart) historyChart.destroy();
+
+                historyChart = new Chart(ctxH, {
+                    type: 'bar',
+                    data: {
+                        labels: dailyLabels,
+                        datasets: [{
+                            label: 'ราคาทองไทยย้อนหลัง 7 วัน (บาท)',
+                            data: dailyPrices,
+                            backgroundColor: 'rgba(255, 215, 0, 0.4)',
+                            borderColor: '#ffd700',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        aspectRatio: 2,
+                        scales: {
+                            y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
+                            x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                        }
+                    }
+                });
+
+            } catch (e) {
+                console.error("History Chart Error:", e);
+            }
+        }
+
+
+
+        fetchGoldPrice();
+        setInterval(fetchGoldPrice, 30000);
+        setTimeout(fetchHistoryData, 3000);
+
     </script>
-
-
 </body>
 </html>
