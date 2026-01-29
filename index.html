@@ -231,7 +231,33 @@
 */
 
             // --- 3. ดึง Gold Spot ---
+        const url = 'https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec';
+
             try {
+                // ใช้ fetch แบบปกติ ไม่ต้องใส่ headers ใดๆ
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                console.log("Data received:", data);
+                // นำข้อมูลไปแสดงผลต่อ...
+                let price = data.price || (data.data && data.data.amount);
+                const numericPrice = parseFloat(price);
+                document.getElementById('spot').innerText = "$ " + numericPrice.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+            } catch (error) {
+                console.error("Spot Error:", error);
+                document.getElementById('spot-price').innerText = "รอข้อมูล (Error)";
+            }
+
+
+/*             try {
                 const resSpot = await fetch(myProxy);
                 const rawData = await resSpot.json();
                 let price = rawData.price || (rawData.data && rawData.data.amount);
@@ -266,7 +292,7 @@
                 console.error("Spot Error:", e);
                 document.getElementById('spot').innerText = "รอข้อมูล...";
             }
-            // ลบ updateGoldPriceAndChart(numericPrice, fxRate); ตรงนี้ออกไปแล้ว
+ */            // ลบ updateGoldPriceAndChart(numericPrice, fxRate); ตรงนี้ออกไปแล้ว
     }
 
         let historyChart;
