@@ -231,46 +231,32 @@
 
 */
 
-            // --- 3. ดึง Gold Spot ---
-        const callbackName = 'callback_' + Math.round(100000 * Math.random());
+        // --- 3. ดึง Gold Spot (ใช้ KuCoin แบบกำหนด URL ให้ถูกต้อง) ---
+        try {
+            const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
+            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlKuCoin));
+            const rawData = await resSpot.json();
 
-        // นิยามฟังก์ชันรับข้อมูลที่ส่งกลับมา
-        window[callbackName] = function (rawData) {
-            // แกะราคาตามโครงสร้าง Coinbase (ปรับตาม API ที่คุณใช้)
-            let price = rawData.price || (rawData.data && rawData.data.amount);
+            // KuCoin มักจะเร็วกว่าและไม่ค่อยบล็อก
+            if (rawData && rawData.data && rawData.data.price) {
+                let price = parseFloat(rawData.data.price);
 
-            if (price) {
-                const numericPrice = parseFloat(price);
-                document.getElementById('spot').innerText = "$ " + numericPrice.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+                // ราคาทองใน KuCoin (PAXG) บางครั้งจะต่างจาก Spot ประมาณ 2-5 เหรียญ
+                // เราสามารถแสดงผลได้เลย
+                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, {
+                    minimumFractionDigits: 2
                 });
 
-                // คำนวณสี
-                if (oldSpotPrice > 0) {
-                    document.getElementById('spot').style.color = (numericPrice > oldSpotPrice) ? "#00ff00" : (numericPrice < oldSpotPrice ? "#ff0000" : "#ffffff");
-                }
-                oldSpotPrice = numericPrice;
-
                 if (fxRate > 0) {
-                    updateGoldPriceAndChart(numericPrice, fxRate);
+                    updateGoldPriceAndChart(price, fxRate);
                 }
-
-                // เรียกดึงข้อมูลประวัติกราฟต่อ
-                fetchHistoryData();
+            } else {
+                document.getElementById('spot').innerText = "API Busy";
             }
-
-            // ลบ Script tag ทิ้งเพื่อความสะอาด
-            delete window[callbackName];
-            const scriptTag = document.getElementById('jsonp-spot');
-            if (scriptTag) scriptTag.remove();
-        };
-
-        // สร้าง Tag เพื่อดึงข้อมูล (เลี่ยง CORS)
-        const script = document.createElement('script');
-        script.id = 'jsonp-spot';
-        script.src = `${myProxy}?callback=${callbackName}`;
-        document.body.appendChild(script);
+        } catch (e) {
+            console.error("Spot Error:", e);
+            document.getElementById('spot').innerText = "Error";
+        }
 
     }
 
