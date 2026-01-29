@@ -231,41 +231,8 @@
 */
 
             // --- 3. ดึง Gold Spot ---
-
-
             
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec';
-        // ใช้ allorigins เพื่อเลี่ยงปัญหา CORS
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(gasUrl)}`;
             try {
-                // ใช้ fetch แบบปกติ ไม่ต้องใส่ headers ใดๆ
-                const response = await fetch(proxyUrl);
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const data = await response.json();
-
-                // ข้อมูลจริงจะอยู่ใน data.contents (ซึ่งเป็น String ต้อง parse อีกรอบ)
-                const finalData = JSON.parse(data.contents);
-
-                console.log("Spot Data:", finalData);
-                // นำ finalData ไปใช้งานต่อ...
-                let price = finalData.price || (finalData.data && finalData.data.amount);
-                const numericPrice = parseFloat(price);
-                document.getElementById('spot').innerText = "$ " + numericPrice.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-
-            } catch (error) {
-                console.error("Spot Error:", error);
-                document.getElementById('spot-price').innerText = "รอข้อมูล (Error)";
-            }
-
-
-/*             try {
                 const resSpot = await fetch(myProxy);
                 const rawData = await resSpot.json();
                 let price = rawData.price || (rawData.data && rawData.data.amount);
@@ -300,7 +267,7 @@
                 console.error("Spot Error:", e);
                 document.getElementById('spot').innerText = "รอข้อมูล...";
             }
- */            // ลบ updateGoldPriceAndChart(numericPrice, fxRate); ตรงนี้ออกไปแล้ว
+            // ลบ updateGoldPriceAndChart(numericPrice, fxRate); ตรงนี้ออกไปแล้ว
     }
 
         let historyChart;
