@@ -193,8 +193,7 @@
                 document.head.appendChild(script);
             });
         }
-
-
+        
     async function fetchGoldPrice() {
         document.querySelector('button').classList.add('opacity-50', 'cursor-wait');
         const updateTimeEl = document.getElementById('updateTime');
@@ -237,16 +236,26 @@
 
         // --- ส่วนที่ 3: ดึง Gold Spot ---
         try {
-            const priceText = await fetchSpotGoldCORSFree();
+            const resSpot = await fetch(mySpotProxy);
+            const priceText = await resSpot.text();
             const price = parseFloat(priceText);
+
             if (!isNaN(price) && price > 0) {
                 document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, { minimumFractionDigits: 2 });
-                // ... (โค้ดอัปเดตกราฟและสีตามเดิม) ...
+
+                // เปลี่ยนสี Spot
+                if (oldSpotPrice > 0) {
+                    document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
+                }
+                oldSpotPrice = price;
+
+                // คำนวณราคาไทยและอัปเดตกราฟ
+                if (fxRate > 0) {
+                    updateGoldPriceAndChart(price, fxRate);
+                }
             }
-        } catch (e) {
-            console.error("Spot Error:", e);
-            document.getElementById('spot').innerText = "CORS Error";
-        }      document.querySelector('button').classList.remove('opacity-50', 'cursor-wait');
+        } catch (e) { console.error("Spot Fetch Error:", e); }
+        document.querySelector('button').classList.remove('opacity-50', 'cursor-wait');
     }
 
     
