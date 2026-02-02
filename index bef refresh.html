@@ -174,68 +174,163 @@
     }
 
     async function fetchGoldPrice() {
-        const updateTimeEl = document.getElementById('updateTime');
-        updateTimeEl.innerText = "กำลังอัปเดต...";
+            const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbxK4aDuezUe5j1-bujlSOWzO6AjskqEov-zRihXn_cDr_vYECI3gwynn4QvoXpiwnQG0g/exec?url=";
 
-        const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
-        const mySpotProxy = "https://script.google.com/macros/s/AKfycbylW-WEc-Qli2MIObVOicX0e0LYof4hJ0Zmqx_WVdYbhSqci92ldNOkGDgq-OEC7HlA/exec";
-
-        // --- ส่วนที่ 1: ดึงค่าเงินบาท (FX) ---
-        try {
-            const resEx = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD");
-            const dataEx = await resEx.json();
-            if (dataEx?.data?.rates?.THB) {
-                fxRate = parseFloat(dataEx.data.rates.THB);
-                document.getElementById('fx').innerText = fxRate.toFixed(2) + " THB";
-            }
-        } catch (e) { console.error("FX Error:", e); }
-
-        // --- ส่วนที่ 2: ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
+            // --- 1 & 2. ดึงราคาไทย ---
         try {
             const url = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
             const res = await fetch(myProxy + "?url=" + encodeURIComponent(url));
             const data = await res.json();
 
-            if (Array.isArray(data)) {
+            if (data) {
                 const hshItem = data.find(item => item.GoldType === 'HSH');
-                if (hshItem) {
-                    huaAsk965 = parseFloat(hshItem.Sell.replace(/,/g, ''));
-                    document.getElementById('ask965').innerText = huaAsk965.toLocaleString();
-                    document.getElementById('bid965').innerText = hshItem.Buy;
-                    document.getElementById('updateTime').innerText = "อัปเดตเมื่อ: " + (hshItem.TimeUpdate || "---");
-                }
+                const sellPrice = parseFloat(hshItem.Sell.replace(/,/g, ''));
+                const buyPrice = parseFloat(hshItem.Buy.replace(/,/g, ''));
+                document.getElementById('ask965').innerText = sellPrice.toLocaleString();
+                huaAsk965 = sellPrice;
+                document.getElementById('bid965').innerText = buyPrice.toLocaleString();
+
                 const refItem = data.find(item => item.GoldType === 'REF');
-                if (refItem) {
-                    document.getElementById('AskAssociation').innerText = refItem.Sell;
-                    document.getElementById('BidAssociation').innerText = refItem.Buy;
-                }
+                const assoSellPrice = parseFloat(refItem.Sell.replace(/,/g, ''));
+                const assoBuyPrice = parseFloat(refItem.Buy.replace(/,/g, ''));
+
+                document.getElementById('AskAssociation').innerText = assoSellPrice.toLocaleString();
+                document.getElementById('BidAssociation').innerText = assoBuyPrice.toLocaleString();
+                document.getElementById('updateTime').innerText = hshItem.TimeUpdate || "---";
             }
-        } catch (e) { console.error("Thai Gold Error:", e); }
+        } catch (e) { console.error("Thai Gold Error", e); }
+            
 
-        // --- ส่วนที่ 3: ดึง Gold Spot ---
+            // --- ส่วนดึง FX (USD/THB) ให้ใกล้เคียง Tradingview ---
+            try {
+                // ใช้ Coinbase API ดึงค่า USD/THB โดยตรง
+                const resEx = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD");
+                const dataEx = await resEx.json();
+
+                if (dataEx && dataEx.data && dataEx.data.rates.THB) {
+                    fxRate = parseFloat(dataEx.data.rates.THB);
+
+                    // แสดงผล
+                    document.getElementById('fx').innerText = fxRate.toFixed(2) + " THB";
+                    console.log("✅ FX Updated (Coinbase):", fxRate);
+                }
+            } catch (e) {
+                console.error("FX Error:", e);
+                // ถ้า Coinbase พลาด ให้ใช้ตัวสำรอง (ExchangeRate-API เดิม)
+            }
+
+/*
+
+            // --- ส่วนดึง FX (เงินบาท) ---
+            try {
+                const resEx = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+                const dataEx = await resEx.json();
+                fxRate = parseFloat(dataEx.rates.THB);
+                document.getElementById('fx').innerText = dataEx.rates.THB.toFixed(2) + " THB";
+            } catch (e) { console.error("FX Error:", e); }
+
+*/
+
+        // --- 3. ดึง Gold Spot (ปรับปรุงใหม่) ---
         try {
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbylW-WEc-Qli2MIObVOicX0e0LYof4hJ0Zmqx_WVdYbhSqci92ldNOkGDgq-OEC7HlA/exec";
+
             const resSpot = await fetch(mySpotProxy);
-            const priceText = await resSpot.text();
-            const price = parseFloat(priceText);
+            const priceText = await resSpot.text(); // รับค่าเป็นข้อความตรงๆ
 
-            if (!isNaN(price) && price > 0) {
-                document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, { minimumFractionDigits: 2 });
+            console.log("Spot Price Received:", priceText);
 
-                // เปลี่ยนสี Spot
+            if (priceText && priceText !== "0" && !isNaN(priceText)) {
+                const price = parseFloat(priceText);
+
+                // แสดงผล
+                document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // อัปเดตสี
                 if (oldSpotPrice > 0) {
                     document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
                 }
                 oldSpotPrice = price;
 
-                // คำนวณราคาไทยและอัปเดตกราฟ
-                if (fxRate > 0) {
+                // วาดกราฟและคำนวณราคาไทย
+                if (typeof fxRate !== 'undefined' && fxRate > 0) {
                     updateGoldPriceAndChart(price, fxRate);
                 }
+            } else {
+                document.getElementById('spot').innerText = "รอราคา...";
             }
-        } catch (e) { console.error("Spot Fetch Error:", e); }
+        } catch (e) {
+            console.error("Spot Fetch Error:", e);
+            document.getElementById('spot').innerText = "Error";
+        }        
+        /*         try {
+            // ใช้ KuCoin API (ดึงราคาล่าสุดของ PAXG-USDT)
+            const urlKuCoin = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=PAXG-USDT";
+            // แก้จากเดิม
+            const resSpot = await fetch(myProxy + "?url=" + encodeURIComponent(urlKuCoin));
+            const rawData = await resSpot.json();
+
+            console.log("Raw Spot Data (KuCoin):", rawData);
+
+            if (rawData && rawData.data && rawData.data.price) {
+                const price = parseFloat(rawData.data.price);
+                document.getElementById('spot').innerText = "$" + price.toLocaleString(undefined, { minimumFractionDigits: 2 });
+            } else {
+                // แผนสำรองสุดท้าย: ถ้า KuCoin พัง ให้ใช้ราคาจาก CoinGecko
+                const urlCG = "https://api.coingecko.com/api/v3/simple/price?ids=pax-gold&vs_currencies=usd";
+                const resCG = await fetch(mySpotProxy + encodeURIComponent(urlCG));
+                const dataCG = await resCG.json();
+                const priceCG = dataCG['pax-gold'].usd;
+                document.getElementById('spot').innerText = "$" + priceCG.toLocaleString(undefined, { minimumFractionDigits: 2 });
+            }
+        } catch (e) {
+            console.error("Spot Error:", e);
+            document.getElementById('spot').innerText = "รอข้อมูล...";
+        }
+
+ */
+            /*             try {
+                const resSpot = await fetch(mySpotProxy);
+                const rawData = await resSpot.json();
+                let price = rawData.price || (rawData.data && rawData.data.amount);
+
+                if (price) {
+                    const numericPrice = parseFloat(price);
+                    document.getElementById('spot').innerText = "$ " + numericPrice.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                    // --- ส่วนคำนวณสีและกราฟ (อยู่ในที่ที่ปลอดภัยแล้ว) ---
+                    if (oldSpotPrice > 0) { // ป้องกันการขึ้นสีแดง/เขียวในครั้งแรกที่โหลด
+                        if (numericPrice > oldSpotPrice) {
+                            document.getElementById('spot').style.color = "#00ff00";
+                        } else if (numericPrice < oldSpotPrice) {
+                            document.getElementById('spot').style.color = "#ff0000";
+                        }
+                    }
+                    oldSpotPrice = numericPrice;
+
+                    if (fxRate > 0) {
+                        updateGoldPriceAndChart(numericPrice, fxRate);
+                    }
+
+                    fetchHistoryData();
+
+                } else {
+                    throw new Error("Data Format Error");
+                }
+            } catch (e) {
+                console.error("Spot Error:", e);
+                document.getElementById('spot').innerText = "รอข้อมูล...";
+            }
+ */            // ลบ updateGoldPriceAndChart(numericPrice, fxRate); ตรงนี้ออกไปแล้ว
     }
 
-    
         let historyChart;
 
         async function fetchHistoryData() {
