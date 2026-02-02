@@ -175,7 +175,7 @@
 
     // --- 3. ดึง Gold Spot (วิธีแก้ CORS 100%) ---
         async function fetchSpotGoldCORSFree() {
-            const mySpotProxy = "URL_GOOGLE_SCRIPT_ตัวล่าสุด_ของคุณ";
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbwRq56OUu_NodwLl-81SMrn0tBTc9OSt-vFv5xbmSI0/dev";
             const callbackName = "jsonpCallback_" + Date.now();
 
             return new Promise((resolve, reject) => {
@@ -200,7 +200,7 @@
         const updateTimeEl = document.getElementById('updateTime');
         updateTimeEl.innerText = "กำลังอัปเดต...";
 
-        const myProxy = "https://script.google.com/macros/s/AKfycbwRq56OUu_NodwLl-81SMrn0tBTc9OSt-vFv5xbmSI0/dev";
+        const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
         const mySpotProxy = "https://script.google.com/macros/s/AKfycbylW-WEc-Qli2MIObVOicX0e0LYof4hJ0Zmqx_WVdYbhSqci92ldNOkGDgq-OEC7HlA/exec";
 
         // --- ส่วนที่ 1: ดึงค่าเงินบาท (FX) ---
