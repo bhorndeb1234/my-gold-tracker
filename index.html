@@ -235,18 +235,39 @@
             }
         } catch (e) { console.error("Thai Gold Error:", e); }
 
-        // --- ส่วนที่ 3: ดึง Gold Spot ---
+        // --- 3. ดึง Gold Spot (ฉบับแก้ CORS ถาวร) ---
         try {
-            const priceText = await fetchSpotGoldCORSFree();
-            const price = parseFloat(priceText);
-            if (!isNaN(price) && price > 0) {
-                document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, { minimumFractionDigits: 2 });
-                // ... (โค้ดอัปเดตกราฟและสีตามเดิม) ...
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbzNbLsVDl-hVeBTFlAplOD9LFq3kfvS0UrQgeQ17M5-rCszJ3-Fs1r0347z3nnGSoFHYg/exec";
+
+            // เรียก fetch แบบปกติเลยครับ
+            const resSpot = await fetch(mySpotProxy);
+            const data = await resSpot.json(); // รับเป็น JSON
+
+            console.log("Spot Data Received:", data);
+
+            if (data && data.price && data.price !== "0") {
+                const price = parseFloat(data.price);
+                document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // อัปเดตสี
+                if (oldSpotPrice > 0) {
+                    document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
+                }
+                oldSpotPrice = price;
+
+                // คำนวณราคาไทยและอัปเดตกราฟ
+                if (typeof fxRate !== 'undefined' && fxRate > 0) {
+                    updateGoldPriceAndChart(price, fxRate);
+                }
             }
         } catch (e) {
-            console.error("Spot Error:", e);
-            document.getElementById('spot').innerText = "CORS Error";
-        }      document.querySelector('button').classList.remove('opacity-50', 'cursor-wait');
+            console.error("Spot Fetch Error:", e);
+            document.getElementById('spot').innerText = "CORS/Network Error";
+        }
+    
     }
 
     
