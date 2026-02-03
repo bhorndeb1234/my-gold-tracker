@@ -235,39 +235,36 @@
             }
         } catch (e) { console.error("Thai Gold Error:", e); }
 
-        // --- 3. ดึง Gold Spot (ฉบับแก้ CORS ถาวร) ---
+        // --- 3. ดึง Gold Spot ---
         try {
-            const mySpotProxy = "https://script.google.com/macros/s/AKfycbzNbLsVDl-hVeBTFlAplOD9LFq3kfvS0UrQgeQ17M5-rCszJ3-Fs1r0347z3nnGSoFHYg/exec";
-
-            // เรียก fetch แบบปกติเลยครับ
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbxR8w55aqprTl_zBI41_WdxVWASyPoZsKUfev_FdrouzEwv1P_v4El5TuG2C40jZ1vyCA/exec";
             const resSpot = await fetch(mySpotProxy);
-            const data = await resSpot.json(); // รับเป็น JSON
+            const data = await resSpot.json();
 
-            console.log("Spot Data Received:", data);
+            console.log("Spot Result:", data);
 
             if (data && data.price && data.price !== "0") {
                 const price = parseFloat(data.price);
                 document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+                    minimumFractionDigits: 2
                 });
 
-                // อัปเดตสี
+                // อัปเดตสีและกราฟ
                 if (oldSpotPrice > 0) {
                     document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
                 }
                 oldSpotPrice = price;
 
-                // คำนวณราคาไทยและอัปเดตกราฟ
                 if (typeof fxRate !== 'undefined' && fxRate > 0) {
                     updateGoldPriceAndChart(price, fxRate);
                 }
+            } else {
+                document.getElementById('spot').innerText = "API Error";
             }
         } catch (e) {
-            console.error("Spot Fetch Error:", e);
-            document.getElementById('spot').innerText = "CORS/Network Error";
-        }
-    
+            console.error("Fetch Spot Error:", e);
+            document.getElementById('spot').innerText = "Network Error";
+        }    
     }
 
     
