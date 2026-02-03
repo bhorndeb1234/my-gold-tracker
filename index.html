@@ -173,30 +173,11 @@
         myChart.update(); // สั่งให้กราฟวาดใหม่
     }
 
-    // --- 3. ดึง Gold Spot (วิธีแก้ CORS 100%) ---
-        async function fetchSpotGoldCORSFree() {
-            const mySpotProxy = "https://script.google.com/macros/s/AKfycbwRq56OUu_NodwLl-81SMrn0tBTc9OSt-vFv5xbmSI0/dev";
-            const callbackName = "jsonpCallback_" + Date.now();
-
-            return new Promise((resolve, reject) => {
-                // สร้างฟังก์ชันชั่วคราวรอรับข้อมูล
-                window[callbackName] = function (data) {
-                    delete window[callbackName];
-                    document.head.removeChild(script);
-                    resolve(data.price);
-                };
-
-                // สร้าง Script Tag เพื่อดึงข้อมูล (วิธีนี้จะไม่ติด CORS)
-                const script = document.createElement('script');
-                script.src = `${mySpotProxy}?callback=${callbackName}`;
-                script.onerror = () => reject("Network Error");
-                document.head.appendChild(script);
-            });
-        }
-
 
     async function fetchGoldPrice() {
         document.querySelector('button').classList.add('opacity-50', 'cursor-wait');
+        const btn = document.querySelector('button');
+        btn.classList.add('opacity-50', 'cursor-wait');
         const updateTimeEl = document.getElementById('updateTime');
         updateTimeEl.innerText = "กำลังอัปเดต...";
 
@@ -235,21 +216,21 @@
             }
         } catch (e) { console.error("Thai Gold Error:", e); }
 
-        // --- 3. ดึง Gold Spot ---
+        // --- ส่วนที่ 3: ดึง Gold Spot ---
         try {
-            const mySpotProxy = "https://script.google.com/macros/s/AKfycbxR8w55aqprTl_zBI41_WdxVWASyPoZsKUfev_FdrouzEwv1P_v4El5TuG2C40jZ1vyCA/exec";
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbzsDPLezFNKQ8V8bKn2-ibDAzCFxY5JnaDwnSjBvCKCI2yDdADmmweutLYRroTSkH1b6g/exec";
             const resSpot = await fetch(mySpotProxy);
             const data = await resSpot.json();
 
             console.log("Spot Result:", data);
 
-            if (data && data.price && data.price !== "0") {
+            // เช็คว่าราคาที่ได้มาไม่ใช่ 0 หรือค่าว่าง
+            if (data && data.price && parseFloat(data.price) > 0) {
                 const price = parseFloat(data.price);
                 document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {
                     minimumFractionDigits: 2
                 });
 
-                // อัปเดตสีและกราฟ
                 if (oldSpotPrice > 0) {
                     document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
                 }
@@ -259,12 +240,17 @@
                     updateGoldPriceAndChart(price, fxRate);
                 }
             } else {
-                document.getElementById('spot').innerText = "API Error";
+                document.getElementById('spot').innerText = "Retry...";
+                console.warn("GAS returned 0, please check Script permissions.");
             }
         } catch (e) {
             console.error("Fetch Spot Error:", e);
             document.getElementById('spot').innerText = "Network Error";
-        }    
+        } finally {
+            // ปลดล็อกปุ่มให้กดใหม่ได้
+            btn.classList.remove('opacity-50', 'cursor-wait');
+        }
+    
     }
 
     
