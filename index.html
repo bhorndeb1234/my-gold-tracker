@@ -162,7 +162,7 @@
         const timeLabel = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
 
         // เก็บข้อมูล (จำกัดแค่ 20 จุดล่าสุดเพื่อไม่ให้กราฟแน่นเกินไป)
-        if (goldLabels.length > 20) {
+        if (goldLabels.length > 120) {
             goldLabels.shift();
             goldData.shift();
         }
