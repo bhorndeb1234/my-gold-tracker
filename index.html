@@ -149,19 +149,14 @@
 
     // --- 2. ฟังก์ชันคำนวณราคาทองไทย (เพิ่มเข้าไปใน fetchGoldPrice เดิมของคุณ) ---
     async function updateGoldPriceAndChart(spot, fx) {
-        // สูตร: ((Spot + Premium 1.5) * 32.48 * FX) / 65.6
-        const premium = 0; //old 1.5
-        //const thaiPrice = (spot * 0.473 * fx);
-        const thaiPrice = huaAsk965;
+        if (!huaAsk965 || huaAsk965 === 0) return; // ถ้าราคาไทยยังไม่มา ไม่ต้องอัปเดตกราฟ
 
-        // แสดงผลตัวเลขคำนวณ
+        const thaiPrice = huaAsk965;
         document.getElementById('thaiCalc').innerText = Math.round(thaiPrice).toLocaleString() + " บาท";
 
-        // อัปเดตกราฟ
         const now = new Date();
         const timeLabel = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
 
-        // เก็บข้อมูล (จำกัดแค่ 20 จุดล่าสุดเพื่อไม่ให้กราฟแน่นเกินไป)
         if (goldLabels.length > 120) {
             goldLabels.shift();
             goldData.shift();
@@ -169,10 +164,8 @@
 
         goldLabels.push(timeLabel);
         goldData.push(Math.round(thaiPrice));
-
-        myChart.update(); // สั่งให้กราฟวาดใหม่
+        myChart.update();
     }
-
 
     async function fetchGoldPrice() {
         document.querySelector('button').classList.add('opacity-50', 'cursor-wait');
@@ -182,7 +175,6 @@
         updateTimeEl.innerText = "กำลังอัปเดต...";
 
         const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
-        const mySpotProxy = "https://script.google.com/macros/s/AKfycbylW-WEc-Qli2MIObVOicX0e0LYof4hJ0Zmqx_WVdYbhSqci92ldNOkGDgq-OEC7HlA/exec";
 
         // --- ส่วนที่ 1: ดึงค่าเงินบาท (FX) ---
         try {
@@ -218,7 +210,7 @@
 
         // --- ส่วนที่ 3: ดึง Gold Spot ---
         try {
-            const mySpotProxy = "https://script.google.com/macros/s/AKfycbwJiN1vnrETBHnXNclHcMB96xd2xfRs6_tuUndEIhJ58cKvrWDmF011LXsEdwiDUwMN1g/exec";
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbxdiLgKu7emWDbUBlUrClM7jYuwRCSKfH9cTIr69537t_oQZKoOEM3w-DG92IRPcD8XIw/exec";
             const resSpot = await fetch(mySpotProxy);
             const data = await resSpot.json();
 
