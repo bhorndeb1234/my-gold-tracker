@@ -248,7 +248,77 @@
     
         let historyChart;
 
-        async function fetchHistoryData() {
+    async function fetchHistoryData() {
+        try {
+            const symbol = "GC=F";
+            // 1. เปลี่ยน range เป็น 14d
+            const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=14d&interval=1d`;
+            const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
+
+            const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
+            const json = await res.json();
+
+            // 2. เพิ่มการตรวจสอบโครงสร้างข้อมูล (ป้องกัน Error ที่คุณเจอ)
+            if (!json || !json.chart || !json.chart.result || !json.chart.result[0]) {
+                console.error("Yahoo API Response Error:", json);
+                return;
+            }
+
+            const result = json.chart.result[0];
+            const timestamps = result.timestamp;
+            const indicators = result.indicators.quote[0];
+            const closePrices = indicators.close;
+
+            if (!timestamps || !closePrices) return;
+
+            let dailyLabels = [];
+            let dailyPrices = [];
+
+            for (let i = 0; i < timestamps.length; i++) {
+                const date = new Date(timestamps[i] * 1000);
+                const label = date.getDate() + "/" + (date.getMonth() + 1);
+
+                const spotPrice = closePrices[i];
+                // ตรวจสอบว่ามีราคา (ไม่เป็น null) และมีค่าเงินบาทแล้ว
+                if (spotPrice && fxRate > 0) {
+                    const thaiPrice = (spotPrice * 0.473 * fxRate);
+                    dailyLabels.push(label);
+                    dailyPrices.push(Math.round(thaiPrice));
+                }
+            }
+
+            // 3. วาดกราฟ
+            const ctxH = document.getElementById('historyChart').getContext('2d');
+            if (historyChart) historyChart.destroy();
+
+            historyChart = new Chart(ctxH, {
+                type: 'bar', // หรือเปลี่ยนเป็น 'line' ถ้า 14 วันแล้วแท่งดูแน่นเกินไป
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{
+                        label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
+                        data: dailyPrices,
+                        backgroundColor: 'rgba(255, 215, 0, 0.4)',
+                        borderColor: '#ffd700',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
+                        x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                    }
+                }
+            });
+
+        } catch (e) {
+            console.error("History Chart Error:", e);
+        }
+    }
+
+/*         async function fetchHistoryData() {
             try {
                 // เปลี่ยนมาใช้ Yahoo Finance API (ดึงผ่าน Proxy ของคุณ)
                 const symbol = "XAUUSD=X"; // Gold Futures (หรือจะใช้ GC=F)
@@ -312,7 +382,7 @@
                 console.error("History Chart Error:", e);
             }
         }
-
+ */
 
 
         fetchGoldPrice();
