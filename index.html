@@ -292,7 +292,7 @@
             if (historyChart) historyChart.destroy();
 
             historyChart = new Chart(ctxH, {
-                type: 'bar', // หรือเปลี่ยนเป็น 'line' ถ้า 14 วันแล้วแท่งดูแน่นเกินไป
+                type: 'line', // หรือเปลี่ยนเป็น 'line' ถ้า 14 วันแล้วแท่งดูแน่นเกินไป
                 data: {
                     labels: dailyLabels,
                     datasets: [{
