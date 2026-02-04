@@ -287,8 +287,35 @@
                 }
             }
 
-            // 3. วาดกราฟ
+                            // ส่วนสร้างกราฟ (เหมือนเดิม)
             const ctxH = document.getElementById('historyChart').getContext('2d');
+            if (historyChart) historyChart.destroy();
+
+            historyChart = new Chart(ctxH, {
+                type: 'line',
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{
+                        label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
+                        data: dailyPrices,
+                        backgroundColor: 'rgba(255, 215, 0, 0.4)',
+                        borderColor: '#ffd700',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    aspectRatio: 2,
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
+                        x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                    }
+                }
+            });
+
+
+            // 3. วาดกราฟ
+/*             const ctxH = document.getElementById('historyChart').getContext('2d');
             if (historyChart) historyChart.destroy();
 
             historyChart = new Chart(ctxH, {
@@ -312,7 +339,7 @@
                     }
                 }
             });
-
+ */
         } catch (e) {
             console.error("History Chart Error:", e);
         }
