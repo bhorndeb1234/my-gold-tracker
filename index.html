@@ -251,8 +251,8 @@
         async function fetchHistoryData() {
             try {
                 // เปลี่ยนมาใช้ Yahoo Finance API (ดึงผ่าน Proxy ของคุณ)
-                const symbol = "GC=F"; // Gold Futures (หรือจะใช้ XAUUSD=X)
-                const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=7d&interval=1d`;
+                const symbol = "XAUUSD=X"; // Gold Futures (หรือจะใช้ GC=F)
+                const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=14d&interval=1d`;
 
                 const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
                 const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
@@ -287,11 +287,11 @@
                 if (historyChart) historyChart.destroy();
 
                 historyChart = new Chart(ctxH, {
-                    type: 'bar',
+                    type: 'line',
                     data: {
                         labels: dailyLabels,
                         datasets: [{
-                            label: 'ราคาทองไทยย้อนหลัง 7 วัน (บาท)',
+                            label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
                             data: dailyPrices,
                             backgroundColor: 'rgba(255, 215, 0, 0.4)',
                             borderColor: '#ffd700',
