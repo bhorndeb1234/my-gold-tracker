@@ -206,8 +206,8 @@
 
     let historyChart;
 
-        async function fetchHistoryData() {
-            try {
+/*         async function fetchHistoryData() {
+             try {
                 // เปลี่ยนมาใช้ Yahoo Finance API (ดึงผ่าน Proxy ของคุณ)
                 const symbol = "GC=F"; // Gold Futures (หรือจะใช้ GC=F)
                 const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=16d&interval=1d`;
@@ -215,6 +215,10 @@
                 const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
                 const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
                 const json = await res.json();
+
+                // ดึงตรงจาก Coinbase Exchange API (86400 คือ 1 วันในหน่วยวินาที)
+                // ใช้ PAXG-USD ซึ่งอ้างอิงราคาทองคำ 1 ออนซ์
+                const url = "https://api.exchange.coinbase.com/products/PAXG-USD/candles?granularity=86400";
 
                 // แกะข้อมูลจากโครงสร้างของ Yahoo Finance
                 const result = json.chart.result[0];
@@ -270,8 +274,80 @@
                 console.error("History Chart Error:", e);
             }
         }
-        
+ */
+       
+    async function fetchHistoryData() {
+        try {
+            // ดึงตรงจาก Coinbase Exchange API (86400 คือ 1 วันในหน่วยวินาที)
+            // ใช้ PAXG-USD ซึ่งอ้างอิงราคาทองคำ 1 ออนซ์
+            const url = "https://api.exchange.coinbase.com/products/PAXG-USD/candles?granularity=86400";
 
+            const res = await fetch(url);
+            const data = await res.json();
+            // ข้อมูลที่ได้จะเป็น Array ของ [time, low, high, open, close, volume]
+
+            if (!data || data.length === 0) return;
+
+            // Coinbase ให้ข้อมูลใหม่สุดขึ้นก่อน เราต้องถอยกลับมา 14 วัน และกลับด้าน (reverse)
+            const last14Days = data.slice(0, 14).reverse();
+
+            let dailyLabels = [];
+            let dailyPrices = [];
+
+            last14Days.forEach(day => {
+                const date = new Date(day[0] * 1000);
+                const label = date.getDate() + "/" + (date.getMonth() + 1);
+                const closePrice = day[4]; // ใช้ค่า Close Price
+
+                if (closePrice && fxRate > 0) {
+                    const thaiPrice = (closePrice * 0.473 * fxRate);
+                    dailyLabels.push(label);
+                    dailyPrices.push(Math.round(thaiPrice));
+                }
+            });
+
+            // คำนวณขอบเขตแกน Y (เพื่อแก้ปัญหาแกน Y ยาวผิดสัดส่วน)
+            const minP = Math.min(...dailyPrices);
+            const maxP = Math.max(...dailyPrices);
+            const margin = (maxP - minP) * 0.2; // เพิ่มช่องว่าง 20%
+
+            const ctxH = document.getElementById('historyChart').getContext('2d');
+            if (historyChart) historyChart.destroy();
+
+            historyChart = new Chart(ctxH, {
+                type: 'line',
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{
+                        label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
+                        data: dailyPrices,
+                        backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                        borderColor: '#ffd700',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // สำคัญ: เพื่อให้กราฟปรับขนาดตาม container
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: Math.floor(minP - margin),
+                            max: Math.ceil(maxP + margin),
+                            grid: { color: '#333' },
+                            ticks: { color: '#ccc' }
+                        },
+                        x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                    }
+                }
+            });
+
+        } catch (e) {
+            console.error("Coinbase History Error:", e);
+        }
+    }
         fetchGoldPrice();
         setInterval(fetchGoldPrice, 30000);
         setTimeout(fetchHistoryData, 3000);
