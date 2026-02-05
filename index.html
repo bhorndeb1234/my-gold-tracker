@@ -272,12 +272,12 @@
                     }
                 }
 
-                // ส่วนสร้างกราฟ (เหมือนเดิม)
+                // 3. วาดกราฟ
                 const ctxH = document.getElementById('historyChart').getContext('2d');
                 if (historyChart) historyChart.destroy();
-
+    
                 historyChart = new Chart(ctxH, {
-                    type: 'line',
+                    type: 'line', // หรือเปลี่ยนเป็น 'line' ถ้า 14 วันแล้วแท่งดูแน่นเกินไป
                     data: {
                         labels: dailyLabels,
                         datasets: [{
@@ -290,13 +290,14 @@
                     },
                     options: {
                         responsive: true,
-                        aspectRatio: 2,
+                        maintainAspectRatio: false,
                         scales: {
                             y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
                             x: { grid: { display: false }, ticks: { color: '#ccc' } }
                         }
                     }
                 });
+                
 
             } catch (e) {
                 console.error("History Chart Error:", e);
