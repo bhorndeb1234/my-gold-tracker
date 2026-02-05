@@ -62,10 +62,18 @@
             <canvas id="goldChart"></canvas>
         </div>
 
-        <div style="width: 95%; max-width: 800px; margin: 20px auto; background: #1e1e1e; padding: 15px; border-radius: 10px;">
+ <!--       <div style="width: 95%; max-width: 800px; margin: 20px auto; background: #1e1e1e; padding: 15px; border-radius: 10px;">
             <h3 style="color: #ffd700; text-align: center; margin-bottom: 10px; font-family: sans-serif;">แนวโน้มราคาไทย 14 วันย้อนหลัง</h3>
             <canvas id="historyChart"></canvas>
         </div>
+-->
+
+<div
+    style="width: 95%; max-width: 800px; height: 300px; margin: 20px auto; background: #1e1e1e; padding: 15px; border-radius: 10px; position: relative;">
+    <h3 style="color: #ffd700; text-align: center; margin-bottom: 10px; font-family: sans-serif;">แนวโน้มราคาไทย 14
+        วันย้อนหลัง</h3>
+    <canvas id="historyChart"></canvas>
+</div>
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -275,7 +283,7 @@
             }
         }
  */
-       
+
     async function fetchHistoryData() {
         try {
             // ดึงตรงจาก Coinbase Exchange API (86400 คือ 1 วันในหน่วยวินาที)
@@ -330,16 +338,41 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // สำคัญ: เพื่อให้กราฟปรับขนาดตาม container
+                    maintainAspectRatio: false, // ยอมให้กราฟปรับตามความสูง 300px ที่เราตั้งใน div
                     scales: {
                         y: {
                             beginAtZero: false,
-                            min: Math.floor(minP - margin),
-                            max: Math.ceil(maxP + margin),
-                            grid: { color: '#333' },
-                            ticks: { color: '#ccc' }
+                            // บีบระยะขอบให้เล็กลง (ใช้ 5% แทน 20%) เพื่อให้กราฟดูไม่โล่งเกินไป
+                            min: Math.floor(minP - ((maxP - minP) * 0.05)),
+                            max: Math.ceil(maxP + ((maxP - minP) * 0.05)),
+                            grid: {
+                                color: '#333',
+                                drawTicks: false // ลดขีดเล็กๆ ข้างแกน
+                            },
+                            ticks: {
+                                color: '#ccc',
+                                maxTicksLimit: 6, // จำกัดจำนวนตัวเลขบนแกน Y ไม่ให้เยอะจนรก
+                                padding: 10,
+                                callback: function (value) {
+                                    return value.toLocaleString();
+                                }
+                            }
                         },
-                        x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#ccc', fontSize: 10 }
+                        }
+                    },
+                    layout: {
+                        padding: {
+                            left: 10,
+                            right: 10,
+                            top: 10,
+                            bottom: 10
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false } // ปิด Legend ถ้าชื่อมันยาวจนกินที่กราฟ
                     }
                 }
             });
