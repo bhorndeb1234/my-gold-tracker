@@ -76,32 +76,6 @@
         </button>
     </div>
 
-    <!-- <script>
-        async function fetchGoldPrice() {
-            const updateTimeEl = document.getElementById('updateTime');
-            updateTimeEl.innerText = "กำลังอัปเดต...";
-
-            try {
-                // เรียก API ผ่าน Proxy เพื่อเลี่ยงปัญหา CORS (ถ้ารันจาก Browser โดยตรง)
-                const resSeacon = await fetch('https://apicheckpricev3.huasengheng.com/api/Values/GetPriceSeacon');
-                const resPrice = await fetch('https://apicheckpricev3.huasengheng.com/api/Values/GetPrice');
-
-                const dataSeacon = await resSeacon.json();
-                const dataPrice = await resPrice.json();
-
-                document.getElementById('ask965').innerText = dataSeacon.Ask965.toLocaleString();
-                document.getElementById('bid965').innerText = dataSeacon.Bid965.toLocaleString();
-                document.getElementById('spot').innerText = dataPrice[0].Bid;
-                document.getElementById('fx').innerText = dataPrice[0].FxBid;
-                document.getElementById('updateTime').innerText = dataSeacon.StrTimeUpdate965;
-            } catch (e) {
-                updateTimeEl.innerText = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
-            }
-        }
-        // โหลดครั้งแรกตอนเปิดเว็บ
-        fetchGoldPrice();
-    </script> -->
-
   <script>
     // --- 1. ตั้งค่าเริ่มต้นกราฟ ---
     let goldLabels = []; // เก็บเวลา
