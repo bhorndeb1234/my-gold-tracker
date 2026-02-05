@@ -157,7 +157,7 @@
         const now = new Date();
         const timeLabel = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
 
-        if (goldLabels.length > 120) {
+        if (goldLabels.length > 240) {
             goldLabels.shift();
             goldData.shift();
         }
@@ -250,9 +250,9 @@
 
     async function fetchHistoryData() {
         try {
-            const symbol = "GC=F";
-            // 1. เปลี่ยน range เป็น 14d
-            const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=14d&interval=1d`;
+            const symbol = "XAUUSD=X"; // Gold Futures (หรือจะใช้ GC=F)
+            // 1. เปลี่ยน range เป็น 16d
+            const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1ุ6d&interval=1d`;
             const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
 
             const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
