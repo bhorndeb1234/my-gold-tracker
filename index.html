@@ -237,12 +237,16 @@
         const ctxH = document.getElementById('historyChart').getContext('2d');
         if (historyChart) historyChart.destroy();
 
+        // หาค่าต่ำสุดในข้อมูลเพื่อเอามาตั้งเป็นฐานของแกน Y (ลบออกสัก 500 บาทเพื่อให้มีพื้นที่หายใจ)
+        const minPrice = Math.min(...data) - 500;
+        const maxPrice = Math.max(...data) + 500;
+
         historyChart = new Chart(ctxH, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'ราคาทองไทยย้อนหลัง 14 วัน (ประมาณการ)',
+                    label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
                     data: data,
                     backgroundColor: 'rgba(255, 215, 0, 0.4)',
                     borderColor: '#ffd700',
@@ -253,16 +257,38 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
-                    x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                    y: {
+                        beginAtZero: false, // ห้ามเริ่มที่ 0
+                        min: minPrice,      // ตั้งค่าต่ำสุดให้ใกล้เคียงกับราคาทองจริง
+                        max: maxPrice,      // ตั้งค่าสูงสุดให้ครอบคลุม
+                        grid: { color: '#333' },
+                        ticks: {
+                            color: '#ccc',
+                            // ฟอร์แมตตัวเลขให้มีคอมม่า (,)
+                            callback: function (value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#ccc' }
+                    }
                 },
                 plugins: {
-                    legend: { labels: { color: '#fff' } }
+                    legend: { labels: { color: '#fff' } },
+                    // เพิ่ม tooltip ให้แสดงคอมม่า
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return 'ราคา: ' + context.parsed.y.toLocaleString() + ' บาท';
+                            }
+                        }
+                    }
                 }
             }
         });
     }
-
     // 4. กราฟ 14 วันย้อนหลัง (ดึงตรงจาก CoinGecko)
     async function fetchHistoryData() {
         try {
