@@ -204,72 +204,72 @@
         } catch (e) { console.error("Spot Error:", e); }
     }
 
-        let historyChart;
+    let historyChart;
 
-            async function fetchHistoryData() {
-                try {
-                    // เปลี่ยนมาใช้ Yahoo Finance API (ดึงผ่าน Proxy ของคุณ)
-                    const symbol = "GC=F"; // Gold Futures (หรือจะใช้ GC=F)
-                    const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=14d&interval=1d`;
+        async function fetchHistoryData() {
+            try {
+                // เปลี่ยนมาใช้ Yahoo Finance API (ดึงผ่าน Proxy ของคุณ)
+                const symbol = "GC=F"; // Gold Futures (หรือจะใช้ GC=F)
+                const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=16d&interval=1d`;
 
-                    const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
-                    const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
-                    const json = await res.json();
+                const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
+                const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
+                const json = await res.json();
 
-                    // แกะข้อมูลจากโครงสร้างของ Yahoo Finance
-                    const result = json.chart.result[0];
-                    const timestamps = result.timestamp; // [17000000, 17000001, ...]
-                    const closePrices = result.indicators.quote[0].close; // [2010.5, 2020.1, ...]
+                // แกะข้อมูลจากโครงสร้างของ Yahoo Finance
+                const result = json.chart.result[0];
+                const timestamps = result.timestamp; // [17000000, 17000001, ...]
+                const closePrices = result.indicators.quote[0].close; // [2010.5, 2020.1, ...]
 
-                    let dailyLabels = [];
-                    let dailyPrices = [];
+                let dailyLabels = [];
+                let dailyPrices = [];
 
-                    // วนลูปจัดการข้อมูล
-                    for (let i = 0; i < timestamps.length; i++) {
-                        const date = new Date(timestamps[i] * 1000);
-                        const label = date.getDate() + "/" + (date.getMonth() + 1);
+                // วนลูปจัดการข้อมูล
+                for (let i = 0; i < timestamps.length; i++) {
+                    const date = new Date(timestamps[i] * 1000);
+                    const label = date.getDate() + "/" + (date.getMonth() + 1);
 
-                        // สูตรคำนวณราคาไทย
-                        const spotPrice = closePrices[i];
-                        if (spotPrice) { // เช็คว่ามีราคาปิดของวันนั้นไหม
-                            //  const thaiPrice = ((spotPrice + 1.5) * 32.48 * fxRate) / 65.6; //Gem formular
-                            const thaiPrice = (spotPrice * 0.473 * fxRate); //Ter formular
+                    // สูตรคำนวณราคาไทย
+                    const spotPrice = closePrices[i];
+                    if (spotPrice) { // เช็คว่ามีราคาปิดของวันนั้นไหม
+                        //  const thaiPrice = ((spotPrice + 1.5) * 32.48 * fxRate) / 65.6; //Gem formular
+                        const thaiPrice = (spotPrice * 0.473 * fxRate); //Ter formular
 
-                            dailyLabels.push(label);
-                            dailyPrices.push(Math.round(thaiPrice));
+                        dailyLabels.push(label);
+                        dailyPrices.push(Math.round(thaiPrice));
+                    }
+                }
+
+                // ส่วนสร้างกราฟ (เหมือนเดิม)
+                const ctxH = document.getElementById('historyChart').getContext('2d');
+                if (historyChart) historyChart.destroy();
+
+                historyChart = new Chart(ctxH, {
+                    type: 'line',
+                    data: {
+                        labels: dailyLabels,
+                        datasets: [{
+                            label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
+                            data: dailyPrices,
+                            backgroundColor: 'rgba(255, 215, 0, 0.4)',
+                            borderColor: '#ffd700',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        aspectRatio: 2,
+                        scales: {
+                            y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
+                            x: { grid: { display: false }, ticks: { color: '#ccc' } }
                         }
                     }
+                });
 
-                    // ส่วนสร้างกราฟ (เหมือนเดิม)
-                    const ctxH = document.getElementById('historyChart').getContext('2d');
-                    if (historyChart) historyChart.destroy();
-
-                    historyChart = new Chart(ctxH, {
-                        type: 'line',
-                        data: {
-                            labels: dailyLabels,
-                            datasets: [{
-                                label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
-                                data: dailyPrices,
-                                backgroundColor: 'rgba(255, 215, 0, 0.4)',
-                                borderColor: '#ffd700',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            aspectRatio: 2,
-                            scales: {
-                                y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
-                                x: { grid: { display: false }, ticks: { color: '#ccc' } }
-                            }
-                        }
-                    });
-
-                } catch (e) {
-                    console.error("History Chart Error:", e);
-                }
+            } catch (e) {
+                console.error("History Chart Error:", e);
             }
+        }
         
 
         fetchGoldPrice();
