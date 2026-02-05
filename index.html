@@ -272,32 +272,60 @@
                     }
                 }
 
-                // 3. วาดกราฟ
+                // 1. คำนวณหาค่าต่ำสุดและสูงสุดจากข้อมูลจริง
+                const minP = Math.min(...dailyPrices);
+                const maxP = Math.max(...dailyPrices);
+                const margin = (maxP - minP) * 0.1; // เพิ่มช่องว่างขอบบน-ล่าง 10% เพื่อไม่ให้เส้นติดขอบเกินไป
+
+                // 2. วาดกราฟ
                 const ctxH = document.getElementById('historyChart').getContext('2d');
                 if (historyChart) historyChart.destroy();
-    
+
                 historyChart = new Chart(ctxH, {
-                    type: 'line', // หรือเปลี่ยนเป็น 'line' ถ้า 14 วันแล้วแท่งดูแน่นเกินไป
+                    type: 'line',
                     data: {
                         labels: dailyLabels,
                         datasets: [{
                             label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
                             data: dailyPrices,
-                            backgroundColor: 'rgba(255, 215, 0, 0.4)',
+                            backgroundColor: 'rgba(255, 215, 0, 0.2)', // ลดความเข้มของพื้นหลัง
                             borderColor: '#ffd700',
-                            borderWidth: 1
+                            borderWidth: 2, // เพิ่มความหนาของเส้น
+                            pointRadius: 3, // เพิ่มจุดบนเส้นให้ดูง่ายขึ้น
+                            fill: true,
+                            tension: 0.3
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
-                            x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                            y: {
+                                beginAtZero: false,
+                                // บีบแกน Y ให้เริ่มจากค่าต่ำสุด และสิ้นสุดที่ค่าสูงสุดของข้อมูล
+                                min: Math.floor(minP - margin),
+                                max: Math.ceil(maxP + margin),
+                                grid: { color: '#333' },
+                                ticks: {
+                                    color: '#ccc',
+                                    // ฟอร์แมตให้แสดงคอมม่า เช่น 42,000
+                                    callback: function (value) {
+                                        return value.toLocaleString();
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#ccc' }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: { color: '#fff' }
+                            }
                         }
                     }
-                });
-                
+                });                
 
             } catch (e) {
                 console.error("History Chart Error:", e);
