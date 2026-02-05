@@ -242,6 +242,29 @@
             // ปลดล็อกปุ่มให้กดใหม่ได้
             btn.classList.remove('opacity-50', 'cursor-wait');
         }
+
+        async function testDirectFetch() {
+            console.log("กำลังทดลองดึงตรงจาก Huasengheng...");
+            try {
+                const url = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
+
+                // ลองดึงตรงๆ ไม่ผ่าน Proxy
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors' // พยายามขอใช้โหมด CORS
+                });
+
+                const data = await response.json();
+                console.log("สำเร็จ! ข้อมูลที่ได้:", data);
+            } catch (error) {
+                console.error("--- ตรวจพบ Error ---");
+                console.error("สาเหตุ:", error.message);
+                console.log("นี่คือ CORS Error ที่เกิดขึ้นเพราะ Browser ปฏิเสธการเข้าถึงโดยตรงครับ");
+            }
+        }
+
+        // เรียกใช้งานเพื่อทดสอบ
+        testDirectFetch();
     
     }
 
