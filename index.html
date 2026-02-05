@@ -230,7 +230,82 @@
         } catch (e) { console.error("Spot Error:", e); }
     }
 
-     let historyChart;
+        let historyChart;
+
+        async function fetchHistoryData() {
+            try {
+                const symbol = "XAUUSD=X"; // Gold Futures (หรือจะใช้ GC=F)
+                // 1. เปลี่ยน range เป็น 16d
+                //const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1ุ6d&interval=1d`;
+                const urlYahoo = `https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=1d&limit=16`;
+                const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
+
+                const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
+                const json = await res.json();
+
+                // 2. เพิ่มการตรวจสอบโครงสร้างข้อมูล (ป้องกัน Error ที่คุณเจอ)
+                if (!json || !json.chart || !json.chart.result || !json.chart.result[0]) {
+                    console.error("Yahoo API Response Error:", json);
+                    return;
+                }
+
+                const result = json.chart.result[0];
+                const timestamps = result.timestamp;
+                const indicators = result.indicators.quote[0];
+                const closePrices = indicators.close;
+
+                if (!timestamps || !closePrices) return;
+
+                let dailyLabels = [];
+                let dailyPrices = [];
+
+                for (let i = 0; i < timestamps.length; i++) {
+                    const date = new Date(timestamps[i] * 1000);
+                    const label = date.getDate() + "/" + (date.getMonth() + 1);
+
+                    const spotPrice = closePrices[i];
+                    // ตรวจสอบว่ามีราคา (ไม่เป็น null) และมีค่าเงินบาทแล้ว
+                    if (spotPrice && fxRate > 0) {
+                        const thaiPrice = (spotPrice * 0.473 * fxRate);
+                        dailyLabels.push(label);
+                        dailyPrices.push(Math.round(thaiPrice));
+                    }
+                }
+
+                // ส่วนสร้างกราฟ (เหมือนเดิม)
+                const ctxH = document.getElementById('historyChart').getContext('2d');
+                if (historyChart) historyChart.destroy();
+
+                historyChart = new Chart(ctxH, {
+                    type: 'line',
+                    data: {
+                        labels: dailyLabels,
+                        datasets: [{
+                            label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
+                            data: dailyPrices,
+                            backgroundColor: 'rgba(255, 215, 0, 0.4)',
+                            borderColor: '#ffd700',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        aspectRatio: 2,
+                        scales: {
+                            y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
+                            x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                        }
+                    }
+                });
+
+            } catch (e) {
+                console.error("History Chart Error:", e);
+            }
+        }
+
+
+
+/*    let historyChart;
 
     // ฟังก์ชันสำหรับวาดกราฟประวัติ
     function renderHistoryChart(labels, data) {
@@ -317,7 +392,7 @@
             }
         } catch (e) { console.error("History Error:", e); }
     }
-
+*/
 
         fetchGoldPrice();
         setInterval(fetchGoldPrice, 30000);
