@@ -234,10 +234,10 @@
 
         async function fetchHistoryData() {
             try {
-                const symbol = "XAUUSD=X"; // Gold Futures (หรือจะใช้ GC=F)
+                const symbol = "GC=F"; // Gold Futures (หรือจะใช้ XAUUSD=X)
                 // 1. เปลี่ยน range เป็น 16d
-                //const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1ุ6d&interval=1d`;
-                const urlYahoo = `https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=1d&limit=16`;
+                const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1ุ6d&interval=1d`;
+                //const urlYahoo = `https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=1d&limit=16`;
                 const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
 
                 const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
