@@ -168,36 +168,15 @@
     }
 
     async function fetchGoldPrice() {
-        // แสดงสถานะการโหลด
+        document.querySelector('button').classList.add('opacity-50', 'cursor-wait');
         const btn = document.querySelector('button');
-        const updateTimeEl = document.getElementById('updateTime');
         btn.classList.add('opacity-50', 'cursor-wait');
-        updateTimeEl.innerText = "กำลังอัปเดตตรงจากแหล่งข้อมูล...";
+        const updateTimeEl = document.getElementById('updateTime');
+        updateTimeEl.innerText = "กำลังอัปเดต...";
 
-        // 1. ดึงราคาทองไทยจากฮั่วเซ่งเฮง (ดึงตรง!)
-        try {
-            const resHSH = await fetch("https://apicheckpricev3.huasengheng.com/api/Values/GetPrice");
-            const data = await resHSH.json();
+        const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
 
-            if (Array.isArray(data)) {
-                const hshItem = data.find(item => item.GoldType === 'HSH');
-                if (hshItem) {
-                    huaAsk965 = parseFloat(hshItem.Sell.replace(/,/g, ''));
-                    document.getElementById('ask965').innerText = hshItem.Sell;
-                    document.getElementById('bid965').innerText = hshItem.Buy;
-                    document.getElementById('updateTime').innerText = "อัปเดตล่าสุด: " + (hshItem.TimeUpdate || "---");
-                }
-                const refItem = data.find(item => item.GoldType === 'REF');
-                if (refItem) {
-                    document.getElementById('AskAssociation').innerText = refItem.Sell;
-                    document.getElementById('BidAssociation').innerText = refItem.Buy;
-                }
-            }
-        } catch (e) {
-            console.error("HSH Direct Fetch Error:", e);
-        }
-
-        // 2. ดึงค่าเงินบาท (FX) จาก Coinbase (ดึงตรง!)
+        // --- ส่วนที่ 1: ดึงค่าเงินบาท (FX) ---
         try {
             const resEx = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=USD");
             const dataEx = await resEx.json();
@@ -207,60 +186,187 @@
             }
         } catch (e) { console.error("FX Error:", e); }
 
-        // 3. ดึง Gold Spot จาก Coinbase (ดึงตรง!)
+        // --- ส่วนที่ 2: ดึงราคาไทย (ฮั่วเซ่งเฮง) ---
         try {
-            const resSpot = await fetch("https://api.coinbase.com/v2/prices/XAU-USD/spot");
-            const dataSpot = await resSpot.json();
+            const url = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
+            const res = await fetch(myProxy + "?url=" + encodeURIComponent(url));
+            const data = await res.json();
 
-            if (dataSpot?.data?.amount) {
-                const price = parseFloat(dataSpot.data.amount);
-                document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, { minimumFractionDigits: 2 });
+            if (Array.isArray(data)) {
+                const hshItem = data.find(item => item.GoldType === 'HSH');
+                if (hshItem) {
+                    huaAsk965 = parseFloat(hshItem.Sell.replace(/,/g, ''));
+                    document.getElementById('ask965').innerText = huaAsk965.toLocaleString();
+                    document.getElementById('bid965').innerText = hshItem.Buy;
+                    document.getElementById('updateTime').innerText = "อัปเดตเมื่อ: " + (hshItem.TimeUpdate || "---");
+                }
+                const refItem = data.find(item => item.GoldType === 'REF');
+                if (refItem) {
+                    document.getElementById('AskAssociation').innerText = refItem.Sell;
+                    document.getElementById('BidAssociation').innerText = refItem.Buy;
+                }
+            }
+        } catch (e) { console.error("Thai Gold Error:", e); }
 
-                // เปลี่ยนสีตัวเลขเมื่อราคาเปลี่ยน
+        // --- ส่วนที่ 3: ดึง Gold Spot ---
+        try {
+            const mySpotProxy = "https://script.google.com/macros/s/AKfycbxdiLgKu7emWDbUBlUrClM7jYuwRCSKfH9cTIr69537t_oQZKoOEM3w-DG92IRPcD8XIw/exec";
+            const resSpot = await fetch(mySpotProxy);
+            const data = await resSpot.json();
+
+            console.log("Spot Result:", data);
+
+            // เช็คว่าราคาที่ได้มาไม่ใช่ 0 หรือค่าว่าง
+            if (data && data.price && parseFloat(data.price) > 0) {
+                const price = parseFloat(data.price);
+                document.getElementById('spot').innerText = "$ " + price.toLocaleString(undefined, {
+                    minimumFractionDigits: 2
+                });
+
                 if (oldSpotPrice > 0) {
                     document.getElementById('spot').style.color = (price > oldSpotPrice) ? "#00ff00" : (price < oldSpotPrice ? "#ff0000" : "#ffffff");
                 }
                 oldSpotPrice = price;
 
-                // อัปเดตกราฟราคาไทยสด
-                if (fxRate > 0) {
+                if (typeof fxRate !== 'undefined' && fxRate > 0) {
                     updateGoldPriceAndChart(price, fxRate);
                 }
+            } else {
+                document.getElementById('spot').innerText = "Retry...";
+                console.warn("GAS returned 0, please check Script permissions.");
             }
-        } catch (e) { console.error("Spot Error:", e); }
+        } catch (e) {
+            console.error("Fetch Spot Error:", e);
+            document.getElementById('spot').innerText = "Network Error";
+        } finally {
+            // ปลดล็อกปุ่มให้กดใหม่ได้
+            btn.classList.remove('opacity-50', 'cursor-wait');
+        }
 
-        btn.classList.remove('opacity-50', 'cursor-wait');
-    }
+        async function testDirectFetch() {
+            console.log("กำลังทดลองดึงตรงจาก Huasengheng...");
+            try {
+                const url = "https://apicheckpricev3.huasengheng.com/api/Values/GetPrice";
 
-     let historyChart;
-     
-    // 4. กราฟ 14 วันย้อนหลัง (ดึงตรงจาก CoinGecko)
-    async function fetchHistoryData() {
-        try {
-            const urlCG = "https://api.coingecko.com/api/v3/coins/pax-gold/market_chart?vs_currency=usd&days=14&interval=daily";
-            const res = await fetch(urlCG);
-            const json = await res.json();
-
-            if (json?.prices) {
-                let dailyLabels = [];
-                let dailyPrices = [];
-
-                // CoinGecko คืนค่า [timestamp, price]
-                json.prices.forEach(item => {
-                    const date = new Date(item[0]);
-                    const label = date.getDate() + "/" + (date.getMonth() + 1);
-                    const spotPrice = item[1];
-
-                    if (fxRate > 0) {
-                        const thaiPrice = (spotPrice * 0.473 * fxRate);
-                        dailyLabels.push(label);
-                        dailyPrices.push(Math.round(thaiPrice));
-                    }
+                // ลองดึงตรงๆ ไม่ผ่าน Proxy
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors' // พยายามขอใช้โหมด CORS
                 });
 
-                renderHistoryChart(dailyLabels, dailyPrices);
+                const data = await response.json();
+                console.log("สำเร็จ! ข้อมูลที่ได้:", data);
+            } catch (error) {
+                console.error("--- ตรวจพบ Error ---");
+                console.error("สาเหตุ:", error.message);
+                console.log("นี่คือ CORS Error ที่เกิดขึ้นเพราะ Browser ปฏิเสธการเข้าถึงโดยตรงครับ");
             }
-        } catch (e) { console.error("History Error:", e); }
+        }
+
+        // เรียกใช้งานเพื่อทดสอบ
+        testDirectFetch();
+    
+    }
+
+    
+        let historyChart;
+
+    async function fetchHistoryData() {
+        try {
+            const symbol = "XAUUSD=X"; // Gold Futures (หรือจะใช้ GC=F)
+            // 1. เปลี่ยน range เป็น 16d
+            //const urlYahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1ุ6d&interval=1d`;
+            const urlYahoo = `https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=1d&limit=16`;
+            const myProxy = "https://script.google.com/macros/s/AKfycbxwykNCUgzYBusuUfmanwPJtwgFbBSvJQ839FUL2lm6EyNKFkxeT60lt-tIq2EXv3Cp/exec";
+
+            const res = await fetch(myProxy + "?url=" + encodeURIComponent(urlYahoo));
+            const json = await res.json();
+
+            // 2. เพิ่มการตรวจสอบโครงสร้างข้อมูล (ป้องกัน Error ที่คุณเจอ)
+            if (!json || !json.chart || !json.chart.result || !json.chart.result[0]) {
+                console.error("Yahoo API Response Error:", json);
+                return;
+            }
+
+            const result = json.chart.result[0];
+            const timestamps = result.timestamp;
+            const indicators = result.indicators.quote[0];
+            const closePrices = indicators.close;
+
+            if (!timestamps || !closePrices) return;
+
+            let dailyLabels = [];
+            let dailyPrices = [];
+
+            for (let i = 0; i < timestamps.length; i++) {
+                const date = new Date(timestamps[i] * 1000);
+                const label = date.getDate() + "/" + (date.getMonth() + 1);
+
+                const spotPrice = closePrices[i];
+                // ตรวจสอบว่ามีราคา (ไม่เป็น null) และมีค่าเงินบาทแล้ว
+                if (spotPrice && fxRate > 0) {
+                    const thaiPrice = (spotPrice * 0.473 * fxRate);
+                    dailyLabels.push(label);
+                    dailyPrices.push(Math.round(thaiPrice));
+                }
+            }
+
+                            // ส่วนสร้างกราฟ (เหมือนเดิม)
+            const ctxH = document.getElementById('historyChart').getContext('2d');
+            if (historyChart) historyChart.destroy();
+
+            historyChart = new Chart(ctxH, {
+                type: 'line',
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{
+                        label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
+                        data: dailyPrices,
+                        backgroundColor: 'rgba(255, 215, 0, 0.4)',
+                        borderColor: '#ffd700',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    aspectRatio: 2,
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
+                        x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                    }
+                }
+            });
+
+
+            // 3. วาดกราฟ
+/*             const ctxH = document.getElementById('historyChart').getContext('2d');
+            if (historyChart) historyChart.destroy();
+
+            historyChart = new Chart(ctxH, {
+                type: 'line', // หรือเปลี่ยนเป็น 'line' ถ้า 14 วันแล้วแท่งดูแน่นเกินไป
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{
+                        label: 'ราคาทองไทยย้อนหลัง 14 วัน (บาท)',
+                        data: dailyPrices,
+                        backgroundColor: 'rgba(255, 215, 0, 0.4)',
+                        borderColor: '#ffd700',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: '#333' }, ticks: { color: '#ccc' } },
+                        x: { grid: { display: false }, ticks: { color: '#ccc' } }
+                    }
+                }
+            });
+ */
+        } catch (e) {
+            console.error("History Chart Error:", e);
+        }
     }
 
 /*         async function fetchHistoryData() {
