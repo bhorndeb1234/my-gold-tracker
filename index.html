@@ -233,9 +233,9 @@
 
                 const closePrice = hour[4];
                 if (closePrice && fxRate > 0) {
-                    const thaiPrice = (closePrice * 0.473 * fxRate);
+                    //const thaiPrice = (closePrice * 0.473 * fxRate);
                     hourlyLabels.push(label);
-                    hourlyPrices.push(Math.round(thaiPrice));
+                    hourlyPrices.push(Math.round(closePrice));
                 }
             });
 
