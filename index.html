@@ -212,42 +212,42 @@
         } catch (e) { console.error("Spot Error:", e); }
     }
 
-    let historyChart;
+ let historyChart;
 
     async function fetchHistoryData() {
         try {
-            // 1. เปลี่ยน granularity เป็น 3600 (เท่ากับ 1 ชั่วโมง)
             const url = "https://api.exchange.coinbase.com/products/PAXG-USD/candles?granularity=3600";
-
             const res = await fetch(url);
             const data = await res.json();
 
             if (!data || data.length === 0) return;
 
-            // 2. ดึงข้อมูล 24 แท่งล่าสุด (24 ชั่วโมง) และกลับด้านให้เวลาเก่าอยู่ซ้าย ใหม่ไปขวา
             const last24Hours = data.slice(0, 24).reverse();
-
             let hourlyLabels = [];
             let hourlyPrices = [];
 
             last24Hours.forEach(hour => {
                 const date = new Date(hour[0] * 1000);
-
-                // 3. ปรับ Label ให้แสดงเป็นเวลา เช่น 14:00
                 const hours = date.getHours().toString().padStart(2, '0');
                 const label = hours + ":00";
 
-                const closePrice = hour[4]; // ค่าราคาปิดของชั่วโมงนั้น
-
+                const closePrice = hour[4];
                 if (closePrice && fxRate > 0) {
-                    // สูตรคำนวณทองไทย (Spot * 0.473 * FX)
-                    //const thaiPrice = (closePrice * 0.473 * fxRate);
+                    const thaiPrice = (closePrice * 0.473 * fxRate);
                     hourlyLabels.push(label);
-                    hourlyPrices.push(Math.round(closePrice));
+                    hourlyPrices.push(Math.round(thaiPrice));
                 }
             });
 
-            // คำนวณขอบเขตแกน Y ให้สมดุล
+            // --- ส่วนตัดสินใจเรื่องสี (Trend Detection) ---
+            const firstPrice = hourlyPrices[0];
+            const lastPrice = hourlyPrices[hourlyPrices.length - 1];
+
+            // ถ้าราคาล่าสุด >= ราคาแรก ให้เป็นสีเขียว (Bullish) ถ้าต่ำกว่าให้เป็นสีแดง (Bearish)
+            const isUp = lastPrice >= firstPrice;
+            const trendColor = isUp ? '#00ff88' : '#ff4444'; // เขียวนีออน หรือ แดงสด
+            const trendBg = isUp ? 'rgba(0, 255, 136, 0.1)' : 'rgba(255, 68, 68, 0.1)';
+
             const minP = Math.min(...hourlyPrices);
             const maxP = Math.max(...hourlyPrices);
 
@@ -259,14 +259,15 @@
                 data: {
                     labels: hourlyLabels,
                     datasets: [{
-                        label: 'ราคา Spot Gold ย้อนหลัง 24 ชม. (บาท)',
+                        label: 'Trend 24h',
                         data: hourlyPrices,
-                        backgroundColor: 'rgba(255, 215, 0, 0.1)', // จางลงนิดหน่อยให้ดูคลีน
-                        borderColor: '#ffd700',
-                        borderWidth: 2,
-                        pointRadius: 2, // เพิ่มจุดเล็กๆ ให้เห็นตำแหน่งชั่วโมง
+                        backgroundColor: trendBg,
+                        borderColor: trendColor, // สีเส้นเปลี่ยนตามเทรนด์
+                        borderWidth: 3,
+                        pointRadius: 0, // ซ่อนจุดเพื่อให้เส้นดูเนียนตาแบบแอปหุ้นชั้นนำ
+                        pointHoverRadius: 6,
                         fill: true,
-                        tension: 0.4 // เพิ่มความโค้งมนของเส้นกราฟ
+                        tension: 0.4
                     }]
                 },
                 options: {
@@ -275,45 +276,40 @@
                     scales: {
                         y: {
                             beginAtZero: false,
-                            // บีบระยะขอบให้เห็นการขยับของราคาชัดเจนขึ้น (Margin 2%)
                             min: Math.floor(minP - ((maxP - minP) * 0.02)),
                             max: Math.ceil(maxP + ((maxP - minP) * 0.02)),
-                            grid: { color: '#333' },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
                             ticks: {
-                                color: '#ccc',
+                                color: '#888',
                                 maxTicksLimit: 5,
-                                callback: function (value) {
-                                    return value.toLocaleString() + " ฿";
-                                }
+                                callback: function (value) { return value.toLocaleString(); }
                             }
                         },
                         x: {
                             grid: { display: false },
-                            ticks: {
-                                color: '#888',
-                                maxTicksLimit: 8, // จำกัดจำนวน Label แกน X ไม่ให้แน่นเกินไป
-                                font: { size: 10 }
-                            }
+                            ticks: { color: '#666', maxTicksLimit: 6 }
                         }
                     },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return "ราคา: " + context.parsed.y.toLocaleString() + " บาท";
-                                }
-                            }
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: '#222',
+                            titleColor: trendColor,
+                            bodyColor: '#fff',
+                            borderColor: '#444',
+                            borderWidth: 1
                         }
                     }
                 }
             });
 
         } catch (e) {
-            console.error("Coinbase 24h History Error:", e);
+            console.error("Coinbase 24h Trend Error:", e);
         }
     }
-
+    
     fetchGoldPrice();
     setInterval(fetchGoldPrice, 30000);
     setTimeout(fetchHistoryData, 3000);
