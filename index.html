@@ -231,7 +231,7 @@
                 const hours = date.getHours().toString().padStart(2, '0');
                 const label = hours + ":00";
 
-                const closePrice = hour[3]+hour[2]+hour[1];
+                const closePrice = hour[3];
                 if (closePrice && fxRate > 0) {
                     //const thaiPrice = (closePrice * 0.473 * fxRate);
                     hourlyLabels.push(label);
